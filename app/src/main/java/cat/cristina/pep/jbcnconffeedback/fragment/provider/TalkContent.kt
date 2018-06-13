@@ -3,10 +3,14 @@ package cat.cristina.pep.jbcnconffeedback.fragment.provider
 import android.content.Context
 import android.support.v7.preference.PreferenceManager
 import cat.cristina.pep.jbcnconffeedback.R
-import cat.cristina.pep.jbcnconffeedback.model.*
+import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
+import cat.cristina.pep.jbcnconffeedback.model.DatabaseHelper
+import cat.cristina.pep.jbcnconffeedback.model.Speaker
+import cat.cristina.pep.jbcnconffeedback.model.Talk
+import cat.cristina.pep.jbcnconffeedback.model.UtilDAOImpl
 import cat.cristina.pep.jbcnconffeedback.utils.PreferenceKeys
-import cat.cristina.pep.jbcnconffeedback.utils.SessionsTimes
-import cat.cristina.pep.jbcnconffeedback.utils.TalksLocations
+import cat.cristina.pep.jbcnconffeedback.utils.ScheduleContentProvider
+import cat.cristina.pep.jbcnconffeedback.utils.VenueContentProvider
 import com.j256.ormlite.android.apptools.OpenHelperManager
 import com.j256.ormlite.dao.Dao
 import java.util.*
@@ -21,6 +25,9 @@ class TalkContent(val context: Context, val date: Date) {
     private var talkDao: Dao<Talk, Int>
     //private var speakerTalkDao: Dao<SpeakerTalk, Int>
 
+    private var scheduleContentProvider: ScheduleContentProvider
+    private var venueContentProvider: VenueContentProvider
+
     /**
      * An array of talk items.
      */
@@ -33,6 +40,10 @@ class TalkContent(val context: Context, val date: Date) {
     val ITEM_MAP: MutableMap<String, TalkItem> = HashMap()
 
     init {
+
+        venueContentProvider = VenueContentProvider(context, MainActivity.JBCNCONF_JSON_VENUES_FILE_NAME)
+        scheduleContentProvider = ScheduleContentProvider(context, MainActivity.JBCNCONF_JSON_SCHEDULES_FILE_NAME)
+
         utilDAOImpl = UtilDAOImpl(context, databaseHelper)
         talkDao = databaseHelper.getTalkDao()
         speakerDao = databaseHelper.getSpeakerDao()
@@ -48,6 +59,7 @@ class TalkContent(val context: Context, val date: Date) {
                     addItem(createTalkItem(i++, it))
                 }
 
+
     }
 
     private fun addItem(item: TalkItem) {
@@ -62,16 +74,23 @@ class TalkContent(val context: Context, val date: Date) {
         today.time = date
 
         val scheduleId = item.talk.scheduleId
-        val session = SessionsTimes.valueOf("${scheduleId.substring(1, 4)}_${scheduleId.substring(9, 12)}")
-        val location = TalksLocations.valueOf("${scheduleId.substring(1, 4)}_${scheduleId.substring(5, 8)}")
+        val sessionId = "${scheduleId.substring(1, 4)}-${scheduleId.substring(9, 12)}"
+        val venueId = "${scheduleId.substring(1, 4)}-${scheduleId.substring(5, 8)}"
+
+        //val session = SessionsTimes.valueOf("${scheduleId.substring(1, 4)}_${scheduleId.substring(9, 12)}")
+        val session = scheduleContentProvider.getSessionTimes(sessionId)
+
+        //val location = TalksLocations.valueOf("${scheduleId.substring(1, 4)}_${scheduleId.substring(5, 8)}")
+        val location = venueContentProvider.getRoom(venueId)
+
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
         val roomName =
                 sharedPreferences?.getString(PreferenceKeys.ROOM_KEY, context.resources.getString(R.string.pref_default_room_name))
-        if (today.get(Calendar.DATE) == session.getStartTalkDateTime().get(Calendar.DATE)
-                && today.get(Calendar.MONTH) == session.getStartTalkDateTime().get(Calendar.MONTH)
-                && today.get(Calendar.YEAR) == session.getStartTalkDateTime().get(Calendar.YEAR)
-                && roomName == location.getRoomName()) {
+        if (today.get(Calendar.DATE) == session.startTalkDateTime.get(Calendar.DATE)
+                && today.get(Calendar.MONTH) == session.startTalkDateTime.get(Calendar.MONTH)
+                && today.get(Calendar.YEAR) == session.startTalkDateTime.get(Calendar.YEAR)
+                && roomName == location) {
             ITEMS_FILTERED_BY_DATE_AND_ROOM_NAME.add(item)
         }
     }

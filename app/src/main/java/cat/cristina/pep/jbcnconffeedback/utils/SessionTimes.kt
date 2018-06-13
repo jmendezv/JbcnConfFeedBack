@@ -7,13 +7,15 @@ data class SessionTimes(
         val endTalkDateTime: Calendar,
         val offsetInMinutes: Int = 15) {
 
-    var startScheduleDdateTime: Calendar
-    var endScheduleDdateTime: Calendar
+    var startScheduleDateTime: Calendar
+    var endScheduleDateTime: Calendar
 
     init {
-        startScheduleDdateTime = endTalkDateTime
-        startScheduleDdateTime.set(Calendar.MINUTE, startScheduleDdateTime.get(Calendar.MINUTE) - offsetInMinutes)
-        endScheduleDdateTime = endTalkDateTime
-        endScheduleDdateTime.set(Calendar.MINUTE, endScheduleDdateTime.get(Calendar.MINUTE) + offsetInMinutes)
+        startScheduleDateTime = endTalkDateTime
+        startScheduleDateTime
+                .set(Calendar.MINUTE, startScheduleDateTime.get(Calendar.MINUTE) - offsetInMinutes)
+        endScheduleDateTime = endTalkDateTime
+        endScheduleDateTime
+                .set(Calendar.MINUTE, endScheduleDateTime.get(Calendar.MINUTE) + offsetInMinutes)
     }
 }

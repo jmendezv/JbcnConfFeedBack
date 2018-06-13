@@ -11,11 +11,12 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import cat.cristina.pep.jbcnconffeedback.R
+import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity.Companion.URL_SPEAKERS_IMAGES
 import cat.cristina.pep.jbcnconffeedback.fragment.ChooseTalkFragment.OnChooseTalkListener
 import cat.cristina.pep.jbcnconffeedback.fragment.provider.TalkContent.TalkItem
-import cat.cristina.pep.jbcnconffeedback.utils.SessionsTimes
-import cat.cristina.pep.jbcnconffeedback.utils.TalksLocations
+import cat.cristina.pep.jbcnconffeedback.utils.ScheduleContentProvider
+import cat.cristina.pep.jbcnconffeedback.utils.VenueContentProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.GlideDrawable
 import com.bumptech.glide.request.RequestListener
@@ -42,6 +43,9 @@ class MyTalkRecyclerViewAdapter(
     private val mOnClickListener: View.OnClickListener
     private val mOnLongClickListener: View.OnLongClickListener
 
+    private var scheduleContentProvider: ScheduleContentProvider
+    private var venueContentProvider: VenueContentProvider
+
     init {
         mOnClickListener = View.OnClickListener { v ->
             val item = v.tag as TalkItem
@@ -55,6 +59,10 @@ class MyTalkRecyclerViewAdapter(
             mListener?.onLongChooseTalk(item)
             true
         }
+
+        scheduleContentProvider = ScheduleContentProvider(context, MainActivity.JBCNCONF_JSON_SCHEDULES_FILE_NAME)
+        venueContentProvider = VenueContentProvider(context, MainActivity.JBCNCONF_JSON_VENUES_FILE_NAME)
+
     }
 
     /*
@@ -208,17 +216,24 @@ class MyTalkRecyclerViewAdapter(
         holder.mSpeakerView.text = item.speaker.name
 
         val scheduleId = item.talk.scheduleId
-        val session = SessionsTimes.valueOf("${scheduleId.substring(1, 4)}_${scheduleId.substring(9, 12)}")
-        val location = TalksLocations.valueOf("${scheduleId.substring(1, 4)}_${scheduleId.substring(5, 8)}")
+
+        val sessionId = "${scheduleId.substring(1, 4)}-${scheduleId.substring(9, 12)}"
+        val venueId = "${scheduleId.substring(1, 4)}-${scheduleId.substring(5, 8)}"
+
+        val session = scheduleContentProvider.getSessionTimes(sessionId)
+        val location = venueContentProvider.getRoom(venueId)
+
+//        val session = SessionsTimes.valueOf("${scheduleId.substring(1, 4)}_${scheduleId.substring(9, 12)}")
+//        val location = TalksLocations.valueOf("${scheduleId.substring(1, 4)}_${scheduleId.substring(5, 8)}")
 
         val simpleTimeFormat = SimpleDateFormat("HH:mm")
-        val startTime = simpleTimeFormat.format(session.getStartTalkDateTime().time)
-        val endTime = simpleTimeFormat.format(session.getEndTalkDateTime().time)
+        val startTime = simpleTimeFormat.format(session.startTalkDateTime.time)
+        val endTime = simpleTimeFormat.format(session.endTalkDateTime.time)
         // eg. Monday 11 March
         simpleTimeFormat.applyPattern("EEEE dd MMMM")
-        val due = simpleTimeFormat.format(session.getStartTalkDateTime().time)
+        val due = simpleTimeFormat.format(session.startTalkDateTime.time)
 //        holder.mScheduleId.text = "Code: ${item.talk.scheduleId}. Starting: ${startTime}. Ending: ${endTime}. Location: ${location.getRoomName()}"
-        holder.mScheduleId.text = "Due on $due from $startTime to $endTime in '${location.getRoomName()}'"
+        holder.mScheduleId.text = "Due on $due from $startTime to $endTime in '${location}'"
         with(holder.mView) {
             tag = item
             setOnClickListener(mOnClickListener)

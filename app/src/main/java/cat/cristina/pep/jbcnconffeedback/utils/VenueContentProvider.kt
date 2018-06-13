@@ -23,15 +23,8 @@ class VenueContentProvider(val context: Context, val fileName: String) {
         return venuesMap[id]!!
     }
 
-    private fun readData(fileName: String): String {
-
-        val inputStream = context.assets.open(fileName)
-        val byteArray = ByteArray(inputStream.available())
-        inputStream.read(byteArray)
-        inputStream.close()
-        return String(byteArray, Charset.defaultCharset())
-
-    }
+    private fun readData(fileName: String) =
+    context.assets.open(fileName).bufferedReader().readText()
 
     /*
     * id has format: MON-TC1

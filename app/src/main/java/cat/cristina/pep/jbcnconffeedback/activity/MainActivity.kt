@@ -102,7 +102,6 @@ class MainActivity :
         AreYouSureDialogFragment.AreYouSureDialogFragmentListener,
         PersonalStuffDialogFragment.OnPersonalStuffDialogFragmentListener {
 
-    private val DEFAULT_STATISTICS_FILE_NAME = "scoring.csv"
     private lateinit var databaseHelper: DatabaseHelper
     private lateinit var utilDAOImpl: UtilDAOImpl
     private var requestQueue: RequestQueue? = null
@@ -113,15 +112,15 @@ class MainActivity :
     private var scheduledFutures: MutableList<ScheduledFuture<*>?>? = null
     private lateinit var roomName: String
     private var autoMode: Boolean = false
-    private val talkSchedules = HashMap<Talk, Pair<SessionsTimes, TalksLocations>>()
+    private val talkSchedules = HashMap<Talk, Pair<SessionTimes, String>>()
     private lateinit var sharedPreferences: SharedPreferences
     private var filteredTalks = false
     private var dataFromFirestore: Map<Long?, List<QueryDocumentSnapshot>>? = null
     private var date = Date()
     private var isLogIn = false
 
-//    private lateinit var scheduleContentProvider: ScheduleContentProvider
-//    private lateinit var venueContentProvider: VenueContentProvider
+    public lateinit var scheduleContentProvider: ScheduleContentProvider
+    public lateinit var venueContentProvider: VenueContentProvider
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -181,8 +180,8 @@ class MainActivity :
 
         sharedPreferences.edit().putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, false).commit()
 
-//        scheduleContentProvider = ScheduleContentProvider(this, "schedules_fake.json")
-//        venueContentProvider = VenueContentProvider(this, "venues.json")
+        scheduleContentProvider = ScheduleContentProvider(this, JBCNCONF_JSON_FAKE_SCHEDULES_FILE_NAME)
+        venueContentProvider = VenueContentProvider(this, JBCNCONF_JSON_VENUES_FILE_NAME)
 
     }
 
@@ -249,10 +248,13 @@ class MainActivity :
                         //                   0123456789012
                         // scheduleId format #MON-TC1-SE1
 
+                        val sessionId =  "${scheduleId.substring(1, 4)}-${scheduleId.substring(9, 12)}"
 
-
-                        val session = SessionsTimes.valueOf("${scheduleId.substring(1, 4)}_${scheduleId.substring(9, 12)}")
-                        val location = TalksLocations.valueOf("${scheduleId.substring(1, 4)}_${scheduleId.substring(5, 8)}")
+                        val session = scheduleContentProvider.getSessionTimes(sessionId)
+                        //val session = SessionsTimes.valueOf("${scheduleId.substring(1, 4)}_${scheduleId.substring(9, 12)}")
+                        val venueId = "${scheduleId.substring(1, 4)}-${scheduleId.substring(5, 8)}"
+                        //val location = TalksLocations.valueOf("${scheduleId.substring(1, 4)}_${scheduleId.substring(5, 8)}")
+                        val location = venueContentProvider.getRoom(venueId)
 
 
                         // Log.d(TAG, "$it $scheduleId $session $location")
@@ -289,24 +291,24 @@ class MainActivity :
 
         Log.d(TAG, "****** ${simpleDateFormatCSV.format(today.time)} ******")
 
-        val talksToSchedule: MutableMap<Talk, Pair<SessionsTimes, TalksLocations>> = mutableMapOf()
+        val talksToSchedule: MutableMap<Talk, Pair<SessionTimes, String>> = mutableMapOf()
 
         /* Which list are candidates to schedule?  */
 
-        talkSchedules.forEach { talk: Talk, pairOfTimesAndLocations: Pair<SessionsTimes, TalksLocations> ->
+        talkSchedules.forEach { talk: Talk, pairOfTimesAndLocations: Pair<SessionTimes, String> ->
 
             /* roomName es el nom de la room que gestionas aquesta tablet */
 
-            if (roomName == pairOfTimesAndLocations.second.getRoomName()) {
+            if (roomName == pairOfTimesAndLocations.second) {
 
                 /* Aixo evita timers que ja ha passar el temps de votació */
-                if (today.before(pairOfTimesAndLocations.first.getEndScheduleDateTime())) {
+                if (today.before(pairOfTimesAndLocations.first.endScheduleDateTime)) {
 
                     /* compare today amb les dates de cada talk pero nomes dia, mes i any YEAR/MONTH/DATE is the same for start/end talk date  */
 
-                    if (today.get(Calendar.YEAR) == pairOfTimesAndLocations.first.getStartTalkDateTime().get(Calendar.YEAR)
-                            && today.get(Calendar.MONTH) == pairOfTimesAndLocations.first.getStartTalkDateTime().get(Calendar.MONTH)
-                            && today.get(Calendar.DATE) == pairOfTimesAndLocations.first.getStartTalkDateTime().get(Calendar.DATE)) {
+                    if (today.get(Calendar.YEAR) == pairOfTimesAndLocations.first.startTalkDateTime.get(Calendar.YEAR)
+                            && today.get(Calendar.MONTH) == pairOfTimesAndLocations.first.startTalkDateTime.get(Calendar.MONTH)
+                            && today.get(Calendar.DATE) == pairOfTimesAndLocations.first.startTalkDateTime.get(Calendar.DATE)) {
 
                         talksToSchedule[talk] = pairOfTimesAndLocations
 
@@ -364,8 +366,8 @@ class MainActivity :
             val timesAndLocations = talksToSchedule[thisTalk]
 
             /* Aquest calcul determina el temps que resta en milliseconds fins a cada final de talk cosiderant el offset!!  */
-            val startTime = timesAndLocations?.first!!.getStartScheduleDateTime().time.time - System.currentTimeMillis()
-            val endTime = timesAndLocations?.first!!.getEndScheduleDateTime().time.time - System.currentTimeMillis()
+            val startTime = timesAndLocations?.first!!.startScheduleDateTime.time.time - System.currentTimeMillis()
+            val endTime = timesAndLocations?.first!!.endScheduleDateTime.time.time - System.currentTimeMillis()
 
             /* Aixo formata el temps que queda perque comenci i acabi l'event actual*/
             val remainingStartTime = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(startTime),
@@ -1168,6 +1170,7 @@ class MainActivity :
     companion object {
 
         const val URL_SPEAKERS_IMAGES = "http://www.jbcnconf.com/2018/"
+        const val DEFAULT_STATISTICS_FILE_NAME = "scoring.csv"
 
         const val MAIN_ACTIVITY = "MainActivity"
         const val CHOOSE_TALK_FRAGMENT = "ChooseTalkFragment"
@@ -1182,6 +1185,9 @@ class MainActivity :
         const val ARE_YOU_SURE_DIALOG_FRAGMENT = "AreYouSureDialogFragment"
         const val PERSONAL_STUFF_DIALOG_FRAGMENT = "PersonalStuffDialogFragment"
 
+        const val JBCNCONF_JSON_SCHEDULES_FILE_NAME = "schedules.json"
+        const val JBCNCONF_JSON_FAKE_SCHEDULES_FILE_NAME = "schedules_fake.json"
+        const val JBCNCONF_JSON_VENUES_FILE_NAME = "venues.json"
         const val JBCNCONF_JSON_COLLECTION_NAME = "items"
 
         const val FIREBASE_COLLECTION = "Scoring"
