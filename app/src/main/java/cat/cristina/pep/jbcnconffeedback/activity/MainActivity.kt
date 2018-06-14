@@ -100,7 +100,8 @@ class MainActivity :
         LicenseDialogFragment.LicenseDialogFragmentListener,
         DatePickerDialogFragment.DatePickerDialogFragmentListener,
         AreYouSureDialogFragment.AreYouSureDialogFragmentListener,
-        PersonalStuffDialogFragment.OnPersonalStuffDialogFragmentListener {
+        PersonalStuffDialogFragment.OnPersonalStuffDialogFragmentListener,
+        AssetsManagerFragment.AssetsManagerFragmentListener {
 
     private lateinit var databaseHelper: DatabaseHelper
     private lateinit var utilDAOImpl: UtilDAOImpl
@@ -164,8 +165,9 @@ class MainActivity :
             Toast.makeText(applicationContext, "${resources.getString(R.string.sorry_working_offline)}: $reason", Toast.LENGTH_SHORT).show()
         setup(connected)
 
-        nav_view.getHeaderView(0).setOnClickListener({
-            if (autoMode == false) {
+        nav_view.getHeaderView(0).setOnClickListener {
+
+            if (!autoMode) {
 
                 val stackSize = supportFragmentManager.backStackEntryCount
                 if (stackSize > 0) {
@@ -176,13 +178,30 @@ class MainActivity :
                     closeLateralMenu()
                 }
             }
-        })
 
-        sharedPreferences.edit().putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, false).commit()
+        }
 
-        scheduleContentProvider = ScheduleContentProvider(this, JBCNCONF_JSON_FAKE_SCHEDULES_FILE_NAME)
-        venueContentProvider = VenueContentProvider(this, JBCNCONF_JSON_VENUES_FILE_NAME)
+        sharedPreferences
+                .edit()
+                .putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, false)
+                .commit()
 
+        var assetsManagerFragment = AssetsManagerFragment.newInstance()
+
+        supportFragmentManager
+                .beginTransaction()
+                .add(assetsManagerFragment, ASSETS_MANAGER_FRAGMENT)
+                .commit()
+
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        val assetsManagerFragment = supportFragmentManager
+                .findFragmentByTag(ASSETS_MANAGER_FRAGMENT) as AssetsManagerFragment
+        scheduleContentProvider = assetsManagerFragment.scheduleContentProvider
+        venueContentProvider = assetsManagerFragment.venueContentProvider
     }
 
     override fun onDestroy() {
@@ -1167,6 +1186,13 @@ class MainActivity :
 
     }
 
+    /*
+    * This method might get called from PersonalStuffDialogFragment eventually
+    *
+    * */
+    override fun onAssetsManagerFragmentInteraction(msg: String) {
+    }
+
     companion object {
 
         const val URL_SPEAKERS_IMAGES = "http://www.jbcnconf.com/2018/"
@@ -1179,6 +1205,7 @@ class MainActivity :
         const val VOTE_FRAGMENT = "VoteFragment"
         const val WELCOME_FRAGMENT = "WelcomeFragment"
         const val SETTINGS_FRAGMENT = "SettingsFragment"
+        const val ASSETS_MANAGER_FRAGMENT = "AssetsManagerFragment"
         const val ABOUT_US_FRAGMENT = "AboutUsFragment"
         const val LICENSE_DIALOG_FRAGMENT = "LicenseDialogFragment"
         const val DATE_PICKER_FRAGMENT = "DatePickerFragment"

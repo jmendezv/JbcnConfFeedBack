@@ -60,8 +60,10 @@ class MyTalkRecyclerViewAdapter(
             true
         }
 
-        scheduleContentProvider = ScheduleContentProvider(context, MainActivity.JBCNCONF_JSON_SCHEDULES_FILE_NAME)
-        venueContentProvider = VenueContentProvider(context, MainActivity.JBCNCONF_JSON_VENUES_FILE_NAME)
+        val assetsManagerFragment = (context as MainActivity).fragmentManager.findFragmentByTag(MainActivity.ASSETS_MANAGER_FRAGMENT) as AssetsManagerFragment
+
+        scheduleContentProvider = assetsManagerFragment.scheduleContentProvider
+        venueContentProvider = assetsManagerFragment.venueContentProvider
 
     }
 

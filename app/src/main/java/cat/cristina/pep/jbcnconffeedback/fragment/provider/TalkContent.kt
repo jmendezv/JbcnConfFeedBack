@@ -4,6 +4,7 @@ import android.content.Context
 import android.support.v7.preference.PreferenceManager
 import cat.cristina.pep.jbcnconffeedback.R
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
+import cat.cristina.pep.jbcnconffeedback.fragment.AssetsManagerFragment
 import cat.cristina.pep.jbcnconffeedback.model.DatabaseHelper
 import cat.cristina.pep.jbcnconffeedback.model.Speaker
 import cat.cristina.pep.jbcnconffeedback.model.Talk
@@ -41,8 +42,10 @@ class TalkContent(val context: Context, val date: Date) {
 
     init {
 
-        venueContentProvider = VenueContentProvider(context, MainActivity.JBCNCONF_JSON_VENUES_FILE_NAME)
-        scheduleContentProvider = ScheduleContentProvider(context, MainActivity.JBCNCONF_JSON_SCHEDULES_FILE_NAME)
+        val assetsManagerFragment = (context as MainActivity).fragmentManager.findFragmentByTag(MainActivity.ASSETS_MANAGER_FRAGMENT) as AssetsManagerFragment
+
+        scheduleContentProvider = assetsManagerFragment.scheduleContentProvider
+        venueContentProvider = assetsManagerFragment.venueContentProvider
 
         utilDAOImpl = UtilDAOImpl(context, databaseHelper)
         talkDao = databaseHelper.getTalkDao()
