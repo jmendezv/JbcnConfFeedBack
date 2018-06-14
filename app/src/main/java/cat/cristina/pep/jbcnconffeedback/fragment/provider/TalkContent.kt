@@ -42,7 +42,9 @@ class TalkContent(val context: Context, val date: Date) {
 
     init {
 
-        val assetsManagerFragment = (context as MainActivity).fragmentManager.findFragmentByTag(MainActivity.ASSETS_MANAGER_FRAGMENT) as AssetsManagerFragment
+        val assetsManagerFragment = (context as MainActivity)
+                .fragmentManager
+                .findFragmentByTag(MainActivity.ASSETS_MANAGER_FRAGMENT) as AssetsManagerFragment
 
         scheduleContentProvider = assetsManagerFragment.scheduleContentProvider
         venueContentProvider = assetsManagerFragment.venueContentProvider
