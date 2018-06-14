@@ -22,6 +22,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import cat.cristina.pep.jbcnconffeedback.R
+import cat.cristina.pep.jbcnconffeedback.R.id.drawer_layout
 import cat.cristina.pep.jbcnconffeedback.fragment.*
 import cat.cristina.pep.jbcnconffeedback.fragment.provider.TalkContent
 import cat.cristina.pep.jbcnconffeedback.model.*
@@ -108,7 +109,6 @@ class MainActivity :
     private var requestQueue: RequestQueue? = null
     private lateinit var vibrator: Vibrator
     private lateinit var dialog: ProgressDialog
-    // private val scheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private var scheduledExecutorService: ScheduledExecutorService? = null
     private var scheduledFutures: MutableList<ScheduledFuture<*>?>? = null
     private lateinit var roomName: String
@@ -117,11 +117,11 @@ class MainActivity :
     private lateinit var sharedPreferences: SharedPreferences
     private var filteredTalks = false
     private var dataFromFirestore: Map<Long?, List<QueryDocumentSnapshot>>? = null
-    private var date = Date()
+    private var selectedDate = Date()
     private var isLogIn = false
 
-    public lateinit var scheduleContentProvider: ScheduleContentProvider
-    public lateinit var venueContentProvider: VenueContentProvider
+    lateinit var scheduleContentProvider: ScheduleContentProvider
+    lateinit var venueContentProvider: VenueContentProvider
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -142,7 +142,6 @@ class MainActivity :
         * int STATE_IDLE Indicates that any drawers are in an idle, settled state. No animation is in progress.
         *
         * */
-
         drawer_layout.addDrawerListener(object : DrawerLayout.SimpleDrawerListener() {
 
             override fun onDrawerOpened(drawerView: View) {
@@ -158,13 +157,22 @@ class MainActivity :
         vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         databaseHelper = OpenHelperManager.getHelper(applicationContext, DatabaseHelper::class.java)
         utilDAOImpl = UtilDAOImpl(this, databaseHelper)
+
         val (connected, reason) = isDeviceConnectedToWifiOrData()
-        if (connected)
+
+        if (connected) {
             requestQueue = Volley.newRequestQueue(this)
-        else
-            Toast.makeText(applicationContext, "${resources.getString(R.string.sorry_working_offline)}: $reason", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(applicationContext, "${resources.getString(R.string.sorry_working_offline)}", Toast.LENGTH_SHORT).show()
+        }
+
         setup(connected)
 
+        /*
+        * This listener emulates a kind of 'home-button' in the logo from
+        * the drawer.
+        *
+        * */
         nav_view.getHeaderView(0).setOnClickListener {
 
             if (!autoMode) {
@@ -181,6 +189,9 @@ class MainActivity :
 
         }
 
+        /*
+        * By default talks are not filtered on entry
+        * */
         sharedPreferences
                 .edit()
                 .putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, false)
@@ -188,6 +199,9 @@ class MainActivity :
 
         var assetsManagerFragment = AssetsManagerFragment.newInstance()
 
+        /*
+        * Non GUI fragment manages json content: sessions and venue names
+        * */
         supportFragmentManager
                 .beginTransaction()
                 .add(assetsManagerFragment, ASSETS_MANAGER_FRAGMENT)
@@ -211,8 +225,12 @@ class MainActivity :
         cancelTimer()
     }
 
-    fun getAutoModeAndRoomName(): Pair<Boolean, String> =
+    private fun getAutoModeAndRoomName(): Pair<Boolean, String> =
             Pair(sharedPreferences.getBoolean(PreferenceKeys.AUTO_MODE_KEY, false), sharedPreferences.getString(PreferenceKeys.ROOM_KEY, resources.getString(R.string.pref_default_room_name)))
+
+    private fun shortenTitleTo(title: String, maxLength: Int = 65): String =
+            if (title.length > maxLength) "${title.substring(0, maxLength)}..."
+            else title
 
     /*
     * This method does two things:
@@ -266,17 +284,11 @@ class MainActivity :
                         val scheduleId = it.scheduleId
                         //                   0123456789012
                         // scheduleId format #MON-TC1-SE1
-
-                        val sessionId =  "${scheduleId.substring(1, 4)}-${scheduleId.substring(9, 12)}"
-
+                        val sessionId = "${scheduleId.substring(1, 4)}-${scheduleId.substring(9, 12)}"
                         val session = scheduleContentProvider.getSessionTimes(sessionId)
-                        //val session = SessionsTimes.valueOf("${scheduleId.substring(1, 4)}_${scheduleId.substring(9, 12)}")
+
                         val venueId = "${scheduleId.substring(1, 4)}-${scheduleId.substring(5, 8)}"
-                        //val location = TalksLocations.valueOf("${scheduleId.substring(1, 4)}_${scheduleId.substring(5, 8)}")
                         val location = venueContentProvider.getRoom(venueId)
-
-
-                        // Log.d(TAG, "$it $scheduleId $session $location")
                         // crea una mapa de Talk y Pair<SessionsTimes, TalksLocation>
                         talkSchedules[it] = session to location
 
@@ -342,12 +354,10 @@ class MainActivity :
             return
         }
 
-        /* Observable to detect no more eschedules to display  */
+        /* Observable to detect no more schedules to display  */
         val timersCount = talksToSchedule.size
 
         var timerCounter: AtomicInteger by Delegates.observable(AtomicInteger(timersCount)) { property, oldValue, newValue ->
-
-            Log.d(TAG, "${oldValue.get()} ${newValue.get()}")
 
             if (newValue.get() == 0) {
                 val fragment = AreYouSureDialogFragment.newInstance(resources.getString(R.string.tasks_finished))
@@ -357,7 +367,12 @@ class MainActivity :
         }
 
         /* Show initial screen with first talk title  */
-        val sortedOnlyTalksList = talksToSchedule.keys.stream().sorted().collect(Collectors.toList())
+        val sortedOnlyTalksList =
+                talksToSchedule
+                        .keys
+                        .stream()
+                        .sorted()
+                        .collect(Collectors.toList())
 
         var nextTalkTitle = sortedOnlyTalksList[0].title
 
@@ -410,7 +425,7 @@ class MainActivity :
 
                 var nextTalkTitle = nextTalk.title
 
-                nextTalkTitle = if (nextTalkTitle.length > 75) nextTalkTitle.substring(0, 75) + "..." else nextTalkTitle
+                nextTalkTitle = shortenTitleTo(nextTalkTitle, 75)
 
                 val speakerRef = nextTalk.speakers?.get(0)
 
@@ -419,6 +434,7 @@ class MainActivity :
                 nextTalkTitle = "Next talk: '$nextTalkTitle' By $speakerName"
 
                 Runnable {
+
                     Log.d(TAG, "WelcomeFragment.........")
                     switchFragment(WelcomeFragment.newInstance(roomName, nextTalkTitle), WELCOME_FRAGMENT, false)
                     timerCounter = AtomicInteger(timerCounter.decrementAndGet())
@@ -428,6 +444,7 @@ class MainActivity :
             } else {
 
                 Runnable {
+
                     Log.d(TAG, "WelcomeFragment.........")
                     switchFragment(WelcomeFragment.newInstance(roomName, resources.getString(R.string.all_talks_processed)), WELCOME_FRAGMENT, false)
                     timerCounter = AtomicInteger(timerCounter.decrementAndGet())
@@ -503,9 +520,8 @@ class MainActivity :
 
             try {
                 speakerDao.create(speaker)
-                // Log.d(TAG, "Speaker ${speaker} inserted")
             } catch (error: Exception) {
-                /* duplicated generalment  */
+                /* duplicated generally  */
                 Log.e(TAG, "Could not insert speaker ${speaker} ${error.message}")
                 if (dialog.isShowing)
                     dialog.dismiss()
@@ -551,7 +567,7 @@ class MainActivity :
         val json = JSONObject(talksJson)
         val items = json.getJSONArray(JBCNCONF_JSON_COLLECTION_NAME)
         val talkDao: Dao<Talk, Int> = databaseHelper.getTalkDao()
-        val speakerTalkDao: Dao<SpeakerTalk, Int> = databaseHelper.getSpeakerTalkDao()
+        // val speakerTalkDao: Dao<SpeakerTalk, Int> = databaseHelper.getSpeakerTalkDao()
         val gson = Gson()
 
         for (i in 0 until (items.length())) {
@@ -640,9 +656,7 @@ class MainActivity :
         }
     }
 
-
-    private fun fromDateToString() = SimpleDateFormat("dd/MM/yyyy").format(date)
-
+    private fun fromDateToString() = simpleDateFormat.format(selectedDate)
 
     private fun closeLateralMenu(): Unit {
         if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
@@ -651,17 +665,16 @@ class MainActivity :
     }
 
     private fun clearBackStack() {
-
         while (supportFragmentManager.popBackStackImmediate());
-
-//        if (supportFragmentManager.backStackEntryCount > 1) {
-//            supportFragmentManager.popBackStack(VOTE_FRAGMENT, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-//            supportFragmentManager.popBackStackImmediate(CHOOSE_TALK_FRAGMENT, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-//        }
     }
 
     private fun saveFilteredKey(isFiltered: Boolean): Unit {
-        sharedPreferences.edit().putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, isFiltered).commit()
+
+        sharedPreferences
+                .edit()
+                .putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, isFiltered)
+                .commit()
+
     }
 
     /*
@@ -927,7 +940,6 @@ class MainActivity :
                     } else {
                         dialog.dismiss()
                         Toast.makeText(this, R.string.sorry_no_scoring_avaiable, Toast.LENGTH_SHORT).show()
-                        //Log.d(TAG, "*** Error *** ${it.exception?.message}")
                     }
                 }
     }
@@ -985,7 +997,7 @@ class MainActivity :
                             .add(scoringDoc)
                             .addOnSuccessListener {
                                 scoreDao.deleteById(id)
-                                Log.d(TAG, "$scoringDoc updated and removed")
+                                //Log.d(TAG, "$scoringDoc updated and removed")
                             }
                             .addOnFailureListener {
                                 Log.d(TAG, it.message)
@@ -1005,9 +1017,13 @@ class MainActivity :
     *
     * */
     override fun onFilterTalks(filtered: Boolean) {
-        sharedPreferences.edit().putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, filtered).commit()
-        filteredTalks = filtered
+        sharedPreferences
+                .edit()
+                .putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, filtered)
+                .commit()
 
+        filteredTalks = filtered
+        /* I change the TAG name because otherwise it wouldn't be displayed  */
         setChooseTalkFragment("$CHOOSE_TALK_FRAGMENT$filtered")
 
     }
@@ -1049,7 +1065,9 @@ class MainActivity :
                         scoreDao.create(Score(0, talkId, scheduleId, score, Date()))
                         // Log.d(TAG, it.message)
                     }
+
         } else {
+
             val scoreObj = Score(0, talkId, scheduleId, score, Date())
             scoreDao.create(scoreObj)
             Log.d(TAG, scoreObj.toString())
@@ -1059,7 +1077,6 @@ class MainActivity :
         /* Some user feedback in the form of a light vibration. Oreo. Android 8.0. APIS 26-27 */
 
         if (sharedPreferences.getBoolean(PreferenceKeys.VIBRATOR_KEY, false)) {
-            Log.d(TAG, "vibrating ......")
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 vibrator.vibrate(VibrationEffect.createOneShot(250, VibrationEffect.DEFAULT_AMPLITUDE))
@@ -1084,7 +1101,8 @@ class MainActivity :
 
 
     /*
-    * This method might be called from the StatisticsFragment
+    * This method might be called eventually from the StatisticsFragment
+    * to respond to chart user events
     * */
     override fun onStatisticsFragment(msg: String) {
     }
@@ -1120,7 +1138,9 @@ class MainActivity :
     *
     * */
     override fun onCredentialsDialogFragmentInteraction(answer: Int) {
+
         when (answer) {
+
             Dialog.BUTTON_POSITIVE -> {
                 Toast.makeText(this, R.string.action_login, Toast.LENGTH_SHORT).show()
                 isLogIn = true
@@ -1129,11 +1149,14 @@ class MainActivity :
                     setChooseTalkFragment("$CHOOSE_TALK_FRAGMENT$answer")
                 }
             }
+
             Dialog.BUTTON_NEGATIVE -> {
                 closeLateralMenu()
             }
+
             Dialog.BUTTON_NEUTRAL -> {
             }
+
         }
     }
 
@@ -1157,24 +1180,30 @@ class MainActivity :
     * */
     override fun onDatePikerDialogFragmentInteraction(newDate: String) {
 
-        date = simpleDateFormat.parse(newDate)
+        selectedDate = simpleDateFormat.parse(newDate)
         val hour = GregorianCalendar().get(Calendar.HOUR_OF_DAY)
         val minutes = GregorianCalendar().get(Calendar.MINUTE)
-        date.time = date.time + ((hour * 60 + minutes) * 60 * 1_000)
+        // A la fecha le añado lo milisegundos de la hora
+        selectedDate.time = selectedDate.time + ((hour * 60 + minutes) * 60 * 1_000)
 
         setChooseTalkFragment("$CHOOSE_TALK_FRAGMENT$newDate")
 
     }
 
     override fun onAreYouSureDialogFragmentInteraction(resp: Int) {
+
         when (resp) {
+
             Dialog.BUTTON_POSITIVE -> {
                 finishAndRemoveTask()
             }
+
             Dialog.BUTTON_NEUTRAL -> {
             }
+
             Dialog.BUTTON_NEGATIVE -> {
             }
+
         }
     }
 
@@ -1193,6 +1222,10 @@ class MainActivity :
     override fun onAssetsManagerFragmentInteraction(msg: String) {
     }
 
+    /*
+    * Static-like Kotlin style declarations
+    *
+    * */
     companion object {
 
         const val URL_SPEAKERS_IMAGES = "http://www.jbcnconf.com/2018/"
@@ -1212,8 +1245,8 @@ class MainActivity :
         const val ARE_YOU_SURE_DIALOG_FRAGMENT = "AreYouSureDialogFragment"
         const val PERSONAL_STUFF_DIALOG_FRAGMENT = "PersonalStuffDialogFragment"
 
-        const val JBCNCONF_JSON_SCHEDULES_FILE_NAME = "schedules.json"
-        const val JBCNCONF_JSON_FAKE_SCHEDULES_FILE_NAME = "schedules_fake.json"
+        // const val JBCNCONF_JSON_SCHEDULES_FILE_NAME = "schedules.json"
+        const val JBCNCONF_JSON_SCHEDULES_FILE_NAME = "schedules_fake.json"
         const val JBCNCONF_JSON_VENUES_FILE_NAME = "venues.json"
         const val JBCNCONF_JSON_COLLECTION_NAME = "items"
 

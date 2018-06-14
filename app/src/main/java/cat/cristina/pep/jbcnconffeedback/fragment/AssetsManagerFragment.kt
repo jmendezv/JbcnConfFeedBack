@@ -46,7 +46,7 @@ class AssetsManagerFragment : Fragment() {
         }
         retainInstance = true
 
-        scheduleContentProvider = ScheduleContentProvider(context!!, MainActivity.JBCNCONF_JSON_FAKE_SCHEDULES_FILE_NAME)
+        scheduleContentProvider = ScheduleContentProvider(context!!, MainActivity.JBCNCONF_JSON_SCHEDULES_FILE_NAME)
         venueContentProvider = VenueContentProvider(context!!, MainActivity.JBCNCONF_JSON_VENUES_FILE_NAME)
 
     }
