@@ -120,8 +120,8 @@ class MainActivity :
     private var selectedDate = Date()
     private var isLogIn = false
 
-    lateinit var scheduleContentProvider: ScheduleContentProvider
-    lateinit var venueContentProvider: VenueContentProvider
+    private lateinit var scheduleContentProvider: ScheduleContentProvider
+    private lateinit var venueContentProvider: VenueContentProvider
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -209,6 +209,10 @@ class MainActivity :
 
     }
 
+    /*
+    *
+    *
+    * */
     override fun onStart() {
         super.onStart()
 
@@ -218,6 +222,11 @@ class MainActivity :
         venueContentProvider = assetsManagerFragment.venueContentProvider
     }
 
+    /*
+    * This method cancel pending firebase request if any and cancel what ever timers there are
+    * schedules in auto mode
+    *
+    * */
     override fun onDestroy() {
         Log.d(TAG, "onDestroy()")
         super.onDestroy()
@@ -639,6 +648,48 @@ class MainActivity :
 
         val actualFragment = supportFragmentManager.findFragmentByTag(tag)
 
+        /*
+        * This will prevent state loss exception:
+        *
+        * java.lang.IllegalStateException: Can not perform this action after onSaveInstanceState
+        *
+        * A condition that arises when trying to to commit a FragmentTransaction after the
+        * activity's transaction has been saved: Activity.onSaveInstanceState(Bundle).
+        *
+        * The Android system has the power to terminate processes at any time to free up memory,
+        * and background activities may be killed with little to no warning as a result.
+        *
+        * To ensure that this sometimes erratic behavior remains hidden from the user,
+        * the framework gives each Activity a chance to save its state by calling its
+        * onSaveInstanceState() method before making the Activity vulnerable to destruction.
+        *
+        * When the saved state is later restored, the user will be given the perception that
+        * they are seamlessly switching between foreground and background activities,
+        * regardless of whether or not the Activity had been killed by the system.
+        *
+        * When the framework calls onSaveInstanceState(), it passes the method a Bundle object
+        * for the Activity to use to save its state, and the Activity records in it the state
+        * of its dialogs, fragments, and views.
+        *
+        * When the method returns, the system parcels the Bundle object across a Binder interface
+        * to the System Server process, where it is safely stored away.
+        *
+        * When the system later decides to recreate the Activity, it sends this same Bundle object
+        * back to the application, for it to use to restore the Activity’s old state.
+        *
+        * The problem stems from the fact that these Bundle objects represent a snapshot of an
+        * Activity at the moment onSaveInstanceState() was called, and nothing more.
+        *
+        * That means when you call FragmentTransaction#commit() after onSaveInstanceState()
+        * is called, the transaction won’t be remembered because it was never recorded as part of
+        * the Activity’s state in the first place.
+        *
+        * In order to protect the user experience, Android avoids state loss at all costs,
+        * and simply throws an IllegalStateException whenever it occurs.
+        *
+        * https://www.androiddesignpatterns.com/2013/08/fragment-transaction-commit-state-loss.html
+        *
+        * */
         if (!isFinishing) {
 
             actualFragment?.tag.run {
@@ -650,12 +701,14 @@ class MainActivity :
                         transaction.addToBackStack(tag)
 
 //                    transaction.commit()
+                    // It prevents the IllegalStateException due to state loss.
                     transaction.commitAllowingStateLoss()
                 }
             }
         }
     }
 
+    /* Uses format: "dd/MM/yyyy"  */
     private fun fromDateToString() = simpleDateFormat.format(selectedDate)
 
     private fun closeLateralMenu(): Unit {
@@ -788,9 +841,11 @@ class MainActivity :
     }
 
     /*
-   * Returns true to display the item as the selected item
-   *
-   * */
+    * This method handles lateral menu requests.
+    *
+    * Returns true to display the item as the selected item
+    *
+    * */
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle navigation view item clicks here.
         when (item.itemId) {
@@ -835,6 +890,7 @@ class MainActivity :
         return false
     }
 
+    /* This method sets the ChooseTalkFragment as active  */
     private fun setChooseTalkFragment(tag: String): Unit {
         val isFilter = sharedPreferences.getBoolean(PreferenceKeys.FILTERED_TALKS_KEY, false)
         val fragment = ChooseTalkFragment.newInstance(1, isFilter, fromDateToString(), isLogIn)
@@ -843,10 +899,15 @@ class MainActivity :
 
 
     /*
-   * /storage/emulated/0/Android/data/cat.cristina.pep.jbcnconffeedback/files/Documents/statistics.csv
-   *
-   *
-   * */
+    * /storage/emulated/0/Android/data/cat.cristina.pep.jbcnconffeedback/files/Documents/statistics.csv
+    *
+    * Careful, there are ',' inside title field
+    *
+    * Format:
+    *
+    * scheduleId, score, date
+    *
+    * */
     private fun createCVSFromStatistics(fileName: String): Unit {
         val file = File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName)
         val fileWriter = FileWriter(file)
@@ -883,7 +944,7 @@ class MainActivity :
     }
 
     /*
-    * This methods sends an email with the CSV file attached
+    * This method sends an email with a CSV file attached
     *
     * */
     private fun sendCSVByEmail(fileName: String): Unit {
@@ -909,9 +970,9 @@ class MainActivity :
     }
 
     /*
-* This method downloads the Scoring collection made up of documents(id_talk, score, date)
-*
-* */
+    * This method downloads the Scoring collection made up of documents(id_talk, score, date)
+    *
+    * */
     private fun downloadScoring(): Unit {
 
         if (!isDeviceConnectedToWifiOrData().first) {
@@ -972,7 +1033,7 @@ class MainActivity :
     }
 
     /*
-    * This method is called from
+    * This method is called from onChooseTalkListener
     *
     * */
     override fun onUpdateTalks() {
