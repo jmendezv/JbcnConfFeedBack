@@ -14,6 +14,8 @@ import android.widget.Toast
 import cat.cristina.pep.jbcnconffeedback.R
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity.Companion.simpleDateFormat
+import cat.cristina.pep.jbcnconffeedback.fragment.dialogs.DatePickerDialogFragment
+import cat.cristina.pep.jbcnconffeedback.fragment.provider.MyTalkRecyclerViewAdapter
 import cat.cristina.pep.jbcnconffeedback.fragment.provider.TalkContent
 import cat.cristina.pep.jbcnconffeedback.fragment.provider.TalkContent.TalkItem
 import cat.cristina.pep.jbcnconffeedback.utils.PreferenceKeys
@@ -31,7 +33,7 @@ class ChooseTalkFragment : Fragment() {
     private var columnCount = 1
     private var isFiltered = false
     private lateinit var sharedPreferences: SharedPreferences
-    private var listener: OnChooseTalkListener? = null
+    private var listener: ChooseTalkFragmentListener? = null
     private var dateStr: String? = null
     private var isLogIn: Boolean = false
 
@@ -89,7 +91,7 @@ class ChooseTalkFragment : Fragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is OnChooseTalkListener) {
+        if (context is ChooseTalkFragmentListener) {
             listener = context
         } else {
             throw RuntimeException(context.toString() + " must implement OnListFragmentInteractionListener")
@@ -164,7 +166,7 @@ class ChooseTalkFragment : Fragment() {
                 if (roomName == resources.getString(R.string.pref_default_room_name)) {
                     Toast.makeText(context, resources.getString(R.string.sorry_no_room_set), Toast.LENGTH_SHORT).show()
                 } else {
-                    listener?.onFilterTalks(!isFiltered)
+                    listener?.onChooseTalkFragmentFilterTalks(!isFiltered)
                 }
                 return true
             }
@@ -215,11 +217,11 @@ class ChooseTalkFragment : Fragment() {
      * to the activity and potentially other fragments contained in that
      * activity.
      */
-    interface OnChooseTalkListener {
-        fun onChooseTalk(item: TalkItem?)
-        fun onLongChooseTalk(item: TalkItem?)
-        fun onUpdateTalks()
-        fun onFilterTalks(filtered: Boolean)
+    interface ChooseTalkFragmentListener {
+        fun onChooseTalkFragmentClickTalk(item: TalkItem?)
+        fun onChooseTalkFragmentLongClickTalk(item: TalkItem?)
+        fun onChooseTalkFragmentUpdateTalks()
+        fun onChooseTalkFragmentFilterTalks(filtered: Boolean)
     }
 
     companion object {

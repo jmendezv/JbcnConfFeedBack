@@ -4,7 +4,7 @@ import android.content.Context
 import android.support.v7.preference.PreferenceManager
 import cat.cristina.pep.jbcnconffeedback.R
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
-import cat.cristina.pep.jbcnconffeedback.fragment.AssetsManagerFragment
+import cat.cristina.pep.jbcnconffeedback.fragment.nonguifragment.AssetsManagerFragment
 import cat.cristina.pep.jbcnconffeedback.model.DatabaseHelper
 import cat.cristina.pep.jbcnconffeedback.model.Speaker
 import cat.cristina.pep.jbcnconffeedback.model.Talk

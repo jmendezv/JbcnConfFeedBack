@@ -18,7 +18,7 @@ private const val ARG_NEXT_TALK = "param2"
 /**
  * A simple [Fragment] subclass.
  * Activities that contain this fragment must implement the
- * [WelcomeFragment.OnWelcomeFragmentListener] interface
+ * [WelcomeFragment.WelcomeFragmentListener] interface
  * to handle interaction events.
  * Use the [WelcomeFragment.newInstance] factory method to
  * create an instance of this fragment.
@@ -28,7 +28,7 @@ class WelcomeFragment : Fragment() {
     // TODO: Rename and change types of parameters
     private var roomName: String? = null
     private var nextTalk: String? = null
-    private var listener: OnWelcomeFragmentListener? = null
+    private var listener: WelcomeFragmentListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,15 +52,15 @@ class WelcomeFragment : Fragment() {
 
     // TODO: Rename method, update argument and hook method into UI event
     fun onButtonPressed(msg: String) {
-        listener?.onWelcomeFragment(msg)
+        listener?.onWelcomeFragmentInteraction(msg)
     }
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is OnWelcomeFragmentListener) {
+        if (context is WelcomeFragmentListener) {
             listener = context
         } else {
-            throw RuntimeException(context.toString() + " must implement OnWelcomeFragmentListener")
+            throw RuntimeException(context.toString() + " must implement WelcomeFragmentListener")
         }
     }
 
@@ -80,9 +80,8 @@ class WelcomeFragment : Fragment() {
      * (http://developer.android.com/training/basics/fragments/communicating.html)
      * for more information.
      */
-    interface OnWelcomeFragmentListener {
-        // TODO: Update argument type and name
-        fun onWelcomeFragment(msg: String)
+    interface WelcomeFragmentListener {
+        fun onWelcomeFragmentInteraction(msg: String)
     }
 
     companion object {
@@ -90,17 +89,17 @@ class WelcomeFragment : Fragment() {
          * Use this factory method to create a new instance of
          * this fragment using the provided parameters.
          *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
+         * @param roomName Parameter 1.
+         * @param nextTalkTitle Parameter 2.
          * @return A new instance of fragment WelcomeFragment.
          */
         // TODO: Rename and change types and number of parameters
         @JvmStatic
-        fun newInstance(param1: String, param2: String) =
+        fun newInstance(roomName: String, nextTalkTitle: String) =
                 WelcomeFragment().apply {
                     arguments = Bundle().apply {
-                        putString(ARG_ROOM_NAME, param1)
-                        putString(ARG_NEXT_TALK, param2)
+                        putString(ARG_ROOM_NAME, roomName)
+                        putString(ARG_NEXT_TALK, nextTalkTitle)
                     }
                 }
     }

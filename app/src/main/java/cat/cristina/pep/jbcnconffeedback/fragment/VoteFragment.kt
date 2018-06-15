@@ -4,16 +4,10 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.support.v4.app.Fragment
-import android.support.v4.widget.DrawerLayout
-import android.support.v7.app.AlertDialog
 import android.support.v7.preference.PreferenceManager
-import android.util.Log
 import android.view.*
 import android.view.animation.AnimationUtils
 import cat.cristina.pep.jbcnconffeedback.R
-import cat.cristina.pep.jbcnconffeedback.utils.PreferenceKeys
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.fragment_vote.*
 
 
@@ -37,7 +31,7 @@ class VoteFragment : Fragment() {
     private lateinit var talkId: String
     private lateinit var talkTitle: String
     private lateinit var speakerName: String
-    private var listener: OnVoteFragmentListener? = null
+    private var listener: VoteFragmentListener? = null
     private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,15 +87,15 @@ class VoteFragment : Fragment() {
 
     /*  */
     fun onButtonPressed(talkId: Int, score: Int) {
-        listener?.onVoteFragment(talkId, score)
+        listener?.onVoteFragmentVote(talkId, score)
     }
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is OnVoteFragmentListener) {
+        if (context is VoteFragmentListener) {
             listener = context
         } else {
-            throw RuntimeException(context.toString() + " must implement OnVoteFragmentListener")
+            throw RuntimeException(context.toString() + " must implement VoteFragmentListener")
         }
     }
 
@@ -115,8 +109,8 @@ class VoteFragment : Fragment() {
     /**
      * This method gets called every time a vote is casted
      */
-    interface OnVoteFragmentListener {
-        fun onVoteFragment(talkId: Int, score: Int)
+    interface VoteFragmentListener {
+        fun onVoteFragmentVote(talkId: Int, score: Int)
     }
 
     companion object {

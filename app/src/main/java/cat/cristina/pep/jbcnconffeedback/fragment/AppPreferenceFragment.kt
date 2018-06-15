@@ -17,7 +17,7 @@ class AppPreferenceFragment :
     private val TAG = AppPreferenceFragment::class.java.name
 
     private lateinit var sharedPreferences: SharedPreferences
-    private var listener: OnAppPreferenceFragmentListener? = null
+    private var listener: AppPreferenceFragmentListener? = null
     private lateinit var previousRoomName: String
     private var previousAutoMode: Boolean = false
 
@@ -65,10 +65,10 @@ class AppPreferenceFragment :
 
     override fun onAttach(context: Context?) {
         super.onAttach(context)
-        if (context is AppPreferenceFragment.OnAppPreferenceFragmentListener) {
+        if (context is AppPreferenceFragment.AppPreferenceFragmentListener) {
             listener = context
         } else {
-            throw RuntimeException(context.toString() + " must implement OnAppPreferenceFragmentListener")
+            throw RuntimeException(context.toString() + " must implement AppPreferenceFragmentListener")
         }
     }
 
@@ -86,7 +86,7 @@ class AppPreferenceFragment :
     }
 
 
-    interface OnAppPreferenceFragmentListener {
+    interface AppPreferenceFragmentListener {
         fun onAppPreferenceFragmentAutoModeRoomNameChanged(autoMode: Boolean)
     }
 

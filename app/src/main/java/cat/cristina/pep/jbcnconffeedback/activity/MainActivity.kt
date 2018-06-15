@@ -22,8 +22,9 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import cat.cristina.pep.jbcnconffeedback.R
-import cat.cristina.pep.jbcnconffeedback.R.id.drawer_layout
 import cat.cristina.pep.jbcnconffeedback.fragment.*
+import cat.cristina.pep.jbcnconffeedback.fragment.dialogs.*
+import cat.cristina.pep.jbcnconffeedback.fragment.nonguifragment.AssetsManagerFragment
 import cat.cristina.pep.jbcnconffeedback.fragment.provider.TalkContent
 import cat.cristina.pep.jbcnconffeedback.model.*
 import cat.cristina.pep.jbcnconffeedback.utils.*
@@ -91,11 +92,11 @@ private val TAG = MainActivity::class.java.name
 class MainActivity :
         AppCompatActivity(),
         NavigationView.OnNavigationItemSelectedListener,
-        ChooseTalkFragment.OnChooseTalkListener,
-        VoteFragment.OnVoteFragmentListener,
-        AppPreferenceFragment.OnAppPreferenceFragmentListener,
-        StatisticsFragment.OnStatisticsFragmentListener,
-        WelcomeFragment.OnWelcomeFragmentListener,
+        ChooseTalkFragment.ChooseTalkFragmentListener,
+        VoteFragment.VoteFragmentListener,
+        AppPreferenceFragment.AppPreferenceFragmentListener,
+        StatisticsFragment.StatisticsFragmentListener,
+        WelcomeFragment.WelcomeFragmentListener,
         CredentialsDialogFragment.CredentialsDialogFragmentListener,
         AboutUsDialogFragment.AboutUsDialogFragmentListener,
         LicenseDialogFragment.LicenseDialogFragmentListener,
@@ -866,7 +867,7 @@ class MainActivity :
             }
 
             R.id.action_update -> {
-                onUpdateTalks()
+                onChooseTalkFragmentUpdateTalks()
             }
 
             R.id.action_finish -> {
@@ -1009,7 +1010,7 @@ class MainActivity :
     * This method is called from onChooseTalkFragment when a talk es selected in manual mode
     *
     * */
-    override fun onChooseTalk(item: TalkContent.TalkItem?) {
+    override fun onChooseTalkFragmentClickTalk(item: TalkContent.TalkItem?) {
 
         if (isLogIn) {
             val voteFragment = VoteFragment.newInstance(item?.talk?.id.toString(), item?.talk?.title!!, item.speaker.name)
@@ -1021,7 +1022,7 @@ class MainActivity :
     * This method is called from onChooseTalkFragment when a talk is long clicked in manual mode
     *
     * */
-    override fun onLongChooseTalk(item: TalkContent.TalkItem?) {
+    override fun onChooseTalkFragmentLongClickTalk(item: TalkContent.TalkItem?) {
         if (isLogIn) {
             //Toast.makeText(this, item?.speaker?.biography, Toast.LENGTH_LONG).show()
             val personalStuffDialogFragment =
@@ -1036,7 +1037,7 @@ class MainActivity :
     * This method is called from onChooseTalkListener
     *
     * */
-    override fun onUpdateTalks() {
+    override fun onChooseTalkFragmentUpdateTalks() {
 
         val scoreDao: Dao<Score, Int> = databaseHelper.getScoreDao()
 
@@ -1077,7 +1078,7 @@ class MainActivity :
     * This method is called from ChooseTalkFragment when there's a filter request by date and room
     *
     * */
-    override fun onFilterTalks(filtered: Boolean) {
+    override fun onChooseTalkFragmentFilterTalks(filtered: Boolean) {
         sharedPreferences
                 .edit()
                 .putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, filtered)
@@ -1097,10 +1098,10 @@ class MainActivity :
     * of data in those fields. However, it's a good idea to use the same fields and data types across
     * multiple documents, so that you can query the documents more easily
     *
-    * Scoring: id_talk, score, date
+    * Scoring: talk_id, schedule_id, score, date
     *
     * */
-    override fun onVoteFragment(talkId: Int, score: Int) {
+    override fun onVoteFragmentVote(talkId: Int, score: Int) {
 
         val scoreDao: Dao<Score, Int> = databaseHelper.getScoreDao()
         val talkDao: Dao<Talk, Int> = databaseHelper.getTalkDao()
@@ -1165,7 +1166,7 @@ class MainActivity :
     * This method might be called eventually from the StatisticsFragment
     * to respond to chart user events
     * */
-    override fun onStatisticsFragment(msg: String) {
+    override fun onStatisticsFragmentInteraction(msg: String) {
     }
 
     /*
@@ -1191,7 +1192,7 @@ class MainActivity :
     * This method might get called from WelcomeFragment eventually
     *
     * */
-    override fun onWelcomeFragment(msg: String) {
+    override fun onWelcomeFragmentInteraction(msg: String) {
     }
 
     /*

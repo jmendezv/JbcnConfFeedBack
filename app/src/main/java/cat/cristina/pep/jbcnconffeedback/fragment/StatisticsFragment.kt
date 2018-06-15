@@ -53,7 +53,7 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
 
     private var param1: String? = null
     private var param2: String? = null
-    private var listenerStatistics: OnStatisticsFragmentListener? = null
+    private var listenerStatistics: StatisticsFragmentListener? = null
     private var dataFromFirestore: Map<Long?, List<QueryDocumentSnapshot>>? = null
     private lateinit var dialog: ProgressDialog
     private lateinit var databaseHelper: DatabaseHelper
@@ -369,15 +369,15 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
 
 
     fun onButtonPressed(msg: String) {
-        listenerStatistics?.onStatisticsFragment(msg)
+        listenerStatistics?.onStatisticsFragmentInteraction(msg)
     }
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is OnStatisticsFragmentListener) {
+        if (context is StatisticsFragmentListener) {
             listenerStatistics = context
         } else {
-            throw RuntimeException(context.toString() + " must implement OnStatisticsFragmentListener")
+            throw RuntimeException(context.toString() + " must implement StatisticsFragmentListener")
         }
     }
 
@@ -388,8 +388,8 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
 
     /**
      */
-    interface OnStatisticsFragmentListener {
-        fun onStatisticsFragment(msg: String)
+    interface StatisticsFragmentListener {
+        fun onStatisticsFragmentInteraction(msg: String)
     }
 
     companion object {
