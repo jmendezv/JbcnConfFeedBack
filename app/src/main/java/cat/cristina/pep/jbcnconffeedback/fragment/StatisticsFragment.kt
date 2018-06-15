@@ -5,6 +5,7 @@ package cat.cristina.pep.jbcnconffeedback.fragment
 import android.app.ProgressDialog
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
 import android.os.Environment
@@ -38,7 +39,6 @@ import kotlinx.android.synthetic.main.fragment_statistics.*
 import java.io.File
 import java.io.FileWriter
 import java.util.*
-import java.util.stream.Collectors
 
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
 private const val ARG_PARAM1 = "param1"
@@ -121,8 +121,9 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
                     if (it.isSuccessful) {
                         dataFromFirestore = it.result.groupBy {
                             it.getLong(MainActivity.FIREBASE_COLLECTION_FIELD_TALK_ID)
+                            //it.getString(MainActivity.FIREBASE_COLLECTION_FIELD_SCHEDULE_ID)?.hashCode()
                         }
-                        setupGraphTopNTalks(10L)
+                        setupGraphTopNTalks(10)
                     } else {
                         dialog.dismiss()
                         Toast.makeText(context, R.string.sorry_no_graphic_available, Toast.LENGTH_LONG).show()
@@ -192,7 +193,10 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
 
     }
 
-    private fun setupGraphTopNTalks(limit: Long) {
+    private fun isLargeDevice(): Boolean =
+            resources.configuration.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK == Configuration.SCREENLAYOUT_SIZE_LARGE
+
+    private fun setupGraphTopNTalks(limit: Int) {
 
         try {
             dialog.setMessage(resources.getString(R.string.processing))
@@ -203,8 +207,6 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
             var index = 0.0F
             val talkDao: Dao<Talk, Int> = databaseHelper.getTalkDao()
             val utilDAOImpl = UtilDAOImpl(context!!, databaseHelper)
-
-
 
             dataFromFirestore
                     ?.asSequence()
@@ -233,31 +235,39 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
 //                                    it
 //                                })
 
-                        var title: String = talkDao.queryForId(it.key?.toInt()).title
-                        var refAuthor = talkDao.queryForId(it.key?.toInt()).speakers?.get(0)
-                        var author = utilDAOImpl.lookupSpeakerByRef(refAuthor!!).name
+                        try {
+                            val talk = utilDAOImpl.lookupTalkByGivenId(it.key!!.toInt())
+                            var title: String = talk.title
+                            val refAuthor = talk.speakers?.get(0)
+                            var author = utilDAOImpl.lookupSpeakerByRef(refAuthor!!).name
 
-                        /* Si el nombre es demasiado largo se saldra de la barra  */
-                        author = author.substring(0, 1) + "." + author.substring(author.indexOf(" "))
-                        title = if (title.length > 35) "'${StringBuilder(title.substring(0, 35)).toString()}...' by $author. ($votes votes)"
-                        else "'$title' by $author. ($votes votes)"
-                        titleAndAvg.add(Pair(title, avg!!))
-                        // Log.d(TAG, "************************************ $title $avg")
+                            /* Si el nombre es demasiado largo se saldra de la barra  */
+                            author = author.substring(0, 1) + "." + author.substring(author.indexOf(" "))
+                            title = if (title.length > 35) "'${StringBuilder(title.substring(0, 35)).toString()}...' by $author. ($votes votes)"
+                            else "'$title' by $author. ($votes votes)"
+                            titleAndAvg.add(Pair(title, avg!!))
+                            // Log.d(TAG, "************************************ $title $avg")
+                        } catch (error: Exception) {
+                            Log.d(TAG, "***** datafromfirestori ******************* conflicting key  ${it.key}  ${error.printStackTrace(System.err)}")
+                        }
                     }
 
+            // API Level 24 min is 23
+//            val firstTen = titleAndAvg
+//                    .stream()
+//                    .sorted { pair1, pair2 -> if (pair1.second < pair2.second) 1 else if (pair1.second == pair2.second) 0 else -1 }
+//                    .limit(limit)
+//                    .collect(Collectors.toList())
+
             val firstTen = titleAndAvg
-                    .stream()
-                    .sorted { pair1, pair2 -> if (pair1.second < pair2.second) 1 else if (pair1.second == pair2.second) 0 else -1 }
-                    .limit(limit)
-                    .collect(Collectors.toList())
+                    .sortedWith(compareBy({ it.second })).asReversed()
+            // .sortedByDescending {it.second }
+            .subList(0, limit)
 
-//            val minimAvg =
-//                    firstTen.stream().sorted { pair1, pair2 ->if (pair1.second < pair2.second) -1 else if (pair1.second == pair2.second) 0 else 1  }.findFirst()
-
-            val maxAvg =
-                    firstTen.stream().sorted { pair1, pair2 ->if (pair1.second > pair2.second) -1 else if (pair1.second == pair2.second) 0 else 1  }.findFirst()
+            val maxAvg = firstTen.first().second
 
             for (pair: Pair<String, Double> in firstTen) {
+                //Log.d(TAG, "************************************ ${pair.first} ${pair.second}")
                 entries.add(BarEntry(index++, pair.second.toFloat()))
                 var title: String = pair.first
                 //title = StringBuilder(title).append(" (${String.format("%.2f", pair.second)})").toString()
@@ -274,20 +284,21 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
             val barData = BarData(barDataSet)
             barData.setDrawValues(true)
             barData.setValueTextColor(Color.BLACK)
-            barData.setValueTextSize(24.0F)
+            barData.setValueTextSize(if (isLargeDevice()) 24.0F else 16.0F)
 
 
             with(barChart) {
                 data = barData
                 xAxis.valueFormatter = IndexAxisValueFormatter(labels) as IAxisValueFormatter?
-                xAxis.textSize = 18.0F
+                xAxis.textSize = if (isLargeDevice()) 18.0F else 12.0F
                 xAxis.setDrawLabels(true)
                 xAxis.position = XAxis.XAxisPosition.BOTTOM_INSIDE
-                xAxis.xOffset = 600.0F
+                xAxis.xOffset = if (isLargeDevice()) 600.0F else 400.0F
                 xAxis.yOffset = 100.0F
                 xAxis.setLabelCount(firstTen!!.size, false)
                 axisLeft.axisMinimum = 0.0F
-                axisLeft.axisMaximum = if (maxAvg.isPresent) maxAvg.get().second.toFloat() + .25F else 5.25F
+                //axisLeft.axisMaximum = if (maxAvg.isPresent) maxAvg.get().second.toFloat() + .25F else 5.25F
+                axisLeft.axisMaximum = maxAvg.toFloat() + 0.5F
                 axisLeft.setDrawLabels(false)
                 axisRight.setDrawLabels(false)
                 fitScreen()
@@ -312,6 +323,7 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
 
         } catch (error: Exception) {
             //Toast.makeText(context, error.message, Toast.LENGTH_SHORT).show()
+            Log.d(TAG, "************************************ ${error.printStackTrace(System.err)}")
         } finally {
             dialog.dismiss()
         }

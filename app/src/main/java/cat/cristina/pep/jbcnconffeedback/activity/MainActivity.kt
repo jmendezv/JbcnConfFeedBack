@@ -380,17 +380,18 @@ class MainActivity :
         val sortedOnlyTalksList =
                 talksToSchedule
                         .keys
-                        .stream()
+                        //.stream()
                         .sorted()
-                        .collect(Collectors.toList())
+
+                        //.collect(Collectors.toList())
 
         var nextTalkTitle = sortedOnlyTalksList[0].title
 
         nextTalkTitle = if (nextTalkTitle.length > 75) nextTalkTitle.substring(0, 75) + "..." else nextTalkTitle
 
-        val speakerRef = sortedOnlyTalksList[0].speakers?.get(0)
+        var speakerRef = sortedOnlyTalksList[0].speakers?.get(0)
 
-        val speakerName = utilDAOImpl.lookupSpeakerByRef(speakerRef!!).name
+        var speakerName = utilDAOImpl.lookupSpeakerByRef(speakerRef!!).name
 
         nextTalkTitle = "Next talk: '$nextTalkTitle' By $speakerName"
 
@@ -411,7 +412,7 @@ class MainActivity :
 
             /* Aquest calcul determina el temps que resta en milliseconds fins a cada final de talk cosiderant el offset!!  */
             val startTime = timesAndLocations?.first!!.startScheduleDateTime.time.time - System.currentTimeMillis()
-            val endTime = timesAndLocations?.first!!.endScheduleDateTime.time.time - System.currentTimeMillis()
+            val endTime = timesAndLocations.first.endScheduleDateTime.time.time - System.currentTimeMillis()
 
             /* Aixo formata el temps que queda perque comenci i acabi l'event actual*/
             val remainingStartTime = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(startTime),
@@ -433,13 +434,13 @@ class MainActivity :
 
                 val nextTalk = sortedOnlyTalksList[index + 1]
 
-                var nextTalkTitle = nextTalk.title
+                nextTalkTitle = nextTalk.title
 
                 nextTalkTitle = shortenTitleTo(nextTalkTitle, 75)
 
-                val speakerRef = nextTalk.speakers?.get(0)
+                speakerRef = nextTalk.speakers?.get(0)
 
-                val speakerName = utilDAOImpl.lookupSpeakerByRef(speakerRef!!).name
+                speakerName = utilDAOImpl.lookupSpeakerByRef(speakerRef!!).name
 
                 nextTalkTitle = "Next talk: '$nextTalkTitle' By $speakerName"
 
@@ -587,6 +588,7 @@ class MainActivity :
 
             try {
                 talkDao.create(talk)
+                Log.e(TAG, "talk ${talk.id} created")
             } catch (error: Exception) {
                 if (dialog.isShowing)
                     dialog.dismiss()
@@ -1106,7 +1108,8 @@ class MainActivity :
         val scoreDao: Dao<Score, Int> = databaseHelper.getScoreDao()
         val talkDao: Dao<Talk, Int> = databaseHelper.getTalkDao()
 
-        val scheduleId = talkDao.queryForId(talkId).scheduleId
+        //val scheduleId = talkDao.queryForId(talkId).scheduleId
+        val scheduleId = utilDAOImpl.lookupTalkByGivenId(talkId).scheduleId
 
         if (isDeviceConnectedToWifiOrData().first) {
 

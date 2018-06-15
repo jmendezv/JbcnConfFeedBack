@@ -145,8 +145,8 @@ data class DatabaseHelper(val context: Context) : OrmLiteSqliteOpenHelper(contex
     internal fun getScoreDao(): Dao<Score, Int> = getDao(Score::class.java)
 
     companion object DatabaseHelperData {
-        private const val DATABASE_NAME = "db_feedback.sql"
-        private const val DATABASE_VERSION = 101
+        const val DATABASE_NAME = "feedback.db"
+        private const val DATABASE_VERSION = 111
     }
 
 }

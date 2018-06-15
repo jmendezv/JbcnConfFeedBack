@@ -51,6 +51,24 @@ data class UtilDAOImpl(val context: Context, private val databaseHelper: Databas
         return databaseHelper.getSpeakerDao().queryForFirst(pq)
     }
 
+
+    /*
+    *
+    * This method searches by Talk.id, as present in the json file
+    *
+    * */
+    fun lookupTalkByGivenId(id: Int): Talk {
+        val qb: QueryBuilder<Talk, Int> = databaseHelper.getTalkDao().queryBuilder()
+        // val where: Where<Speaker, Int> = qb.where()
+        val selectArg: SelectArg = SelectArg()
+
+        qb.where().eq(Talk.ID_FIELD_NAME, selectArg)
+        val pq: PreparedQuery<Talk> = qb.prepare()
+        selectArg.setValue(id)
+
+        return databaseHelper.getTalkDao().queryForFirst(pq)
+    }
+
     fun onDestroy() {
         OpenHelperManager.releaseHelper()
         databaseHelper.close()

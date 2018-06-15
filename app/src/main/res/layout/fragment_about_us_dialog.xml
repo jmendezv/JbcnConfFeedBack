@@ -19,7 +19,7 @@
         android:layout_height="1dp"
         android:background="?android:attr/listDivider" />
 
-    <TextView
+    <!-- TextView
         android:id="@+id/about_cris"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -29,7 +29,7 @@
         android:layout_marginBottom="16dp"
         android:fontFamily="sans-serif"
         android:textSize="@dimen/sixteen"
-        android:text="@string/line_one" />
+        android:text="@string/line_one" / -->
 
     <TextView
         android:id="@+id/about_pep"

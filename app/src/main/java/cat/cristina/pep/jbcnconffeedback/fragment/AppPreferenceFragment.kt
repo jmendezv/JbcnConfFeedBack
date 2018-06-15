@@ -107,7 +107,7 @@ class AppPreferenceFragment :
             }
             PreferenceKeys.ROOM_KEY -> {
                 val summary = sharedPreferences!!.getString(key, resources.getString(R.string.pref_default_room_name))
-                val mode = sharedPreferences!!.getBoolean(PreferenceKeys.AUTO_MODE_KEY, false)
+                val mode = sharedPreferences.getBoolean(PreferenceKeys.AUTO_MODE_KEY, false)
                 preference.summary = summary
                 sharedPreferences.edit().putString(key, summary).commit()
                 // al listener se l'ha de cridar des d'onDestroy

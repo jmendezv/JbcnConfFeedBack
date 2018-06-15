@@ -57,9 +57,10 @@ class TalkContent(val context: Context, val date: Date) {
         var i = 1
         talkDao
                 .queryForAll()
-                .stream()
-                // by scheduleId
                 .sorted()
+//                .stream() // API Level 24
+//                // by scheduleId
+//                .sorted()
                 .forEach {
                     addItem(createTalkItem(i++, it))
                 }

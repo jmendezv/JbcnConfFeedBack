@@ -209,7 +209,7 @@ class MyTalkRecyclerViewAdapter(
         // Small screens
         if (context.resources.configuration.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK < Configuration.SCREENLAYOUT_SIZE_LARGE) {
             holder.mTitleView.text =
-                    if (item.talk.title.length > 35) item.talk.title.substring(0, 35).let {
+                    if (item.talk.title.length > 55) item.talk.title.substring(0, 55).let {
                         "$it..."
                     } else item.talk.title
         } else { // Big screens

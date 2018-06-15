@@ -132,21 +132,22 @@ class ChooseTalkFragment : Fragment() {
 
                                     talkContent
                                             .ITEMS_FILTERED_BY_DATE_AND_ROOM_NAME
-                                            .stream()
+                                            //.stream()
                                             .filter {
                                                 it.speaker.name.toLowerCase().contains(query!!.toLowerCase()) || it.talk.title.toLowerCase().contains(query!!.toLowerCase())
                                             }
-                                            .collect(Collectors.toList())
+
+                                            //.collect(Collectors.toList())
 
                                 } else {
 
                                     talkContent
                                             .ITEMS
-                                            .stream()
+                                            //.stream()
                                             .filter {
                                                 it.speaker.name.toLowerCase().contains(query!!.toLowerCase()) || it.talk.title.toLowerCase().contains(query!!.toLowerCase())
                                             }
-                                            .collect(Collectors.toList())
+                                            //.collect(Collectors.toList())
 
                                 }
                         adapter = MyTalkRecyclerViewAdapter(filteredTalkContent, listener, context)
