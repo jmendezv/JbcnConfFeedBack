@@ -50,7 +50,7 @@ class ChooseTalkFragment : Fragment() {
         val hour = GregorianCalendar().get(Calendar.HOUR_OF_DAY)
         val minutes = GregorianCalendar().get(Calendar.MINUTE)
         date.time = date.time + ((hour * 60 + minutes) * 60 * 1_000)
-        talkContent = TalkContent(activity!!.applicationContext, date)
+        talkContent = TalkContent(activity!!, date)
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         setHasOptionsMenu(true)
     }

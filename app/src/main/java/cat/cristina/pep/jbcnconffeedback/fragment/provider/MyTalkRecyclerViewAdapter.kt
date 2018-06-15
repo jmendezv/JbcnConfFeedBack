@@ -62,7 +62,7 @@ class MyTalkRecyclerViewAdapter(
         }
 
         val assetsManagerFragment = (context as MainActivity)
-                .fragmentManager
+                .supportFragmentManager
                 .findFragmentByTag(MainActivity.ASSETS_MANAGER_FRAGMENT) as AssetsManagerFragment
 
         scheduleContentProvider = assetsManagerFragment.scheduleContentProvider
