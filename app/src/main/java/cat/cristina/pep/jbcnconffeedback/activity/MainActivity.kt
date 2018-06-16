@@ -27,7 +27,10 @@ import cat.cristina.pep.jbcnconffeedback.fragment.dialogs.*
 import cat.cristina.pep.jbcnconffeedback.fragment.nonguifragment.AssetsManagerFragment
 import cat.cristina.pep.jbcnconffeedback.fragment.provider.TalkContent
 import cat.cristina.pep.jbcnconffeedback.model.*
-import cat.cristina.pep.jbcnconffeedback.utils.*
+import cat.cristina.pep.jbcnconffeedback.utils.PreferenceKeys
+import cat.cristina.pep.jbcnconffeedback.utils.ScheduleContentProvider
+import cat.cristina.pep.jbcnconffeedback.utils.SessionTimes
+import cat.cristina.pep.jbcnconffeedback.utils.VenueContentProvider
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.Response
@@ -51,9 +54,7 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.stream.Collectors
 import kotlin.properties.Delegates
-
 
 private const val SPEAKERS_URL = "https://raw.githubusercontent.com/barcelonajug/jbcnconf_web/gh-pages/2018/_data/speakers.json"
 private const val TALKS_URL = "https://raw.githubusercontent.com/barcelonajug/jbcnconf_web/gh-pages/2018/_data/talks.json"
@@ -114,7 +115,7 @@ class MainActivity :
     private var scheduledFutures: MutableList<ScheduledFuture<*>?>? = null
     private lateinit var roomName: String
     private var autoMode: Boolean = false
-    private val talkSchedules = HashMap<Talk, Pair<SessionTimes, String>>()
+    private val talkSchedules = mutableMapOf<Talk, Pair<SessionTimes, String>>()
     private lateinit var sharedPreferences: SharedPreferences
     private var filteredTalks = false
     private var dataFromFirestore: Map<Long?, List<QueryDocumentSnapshot>>? = null
@@ -167,7 +168,7 @@ class MainActivity :
             Toast.makeText(applicationContext, "${resources.getString(R.string.sorry_working_offline)}", Toast.LENGTH_SHORT).show()
         }
 
-        setup(connected)
+        setupDownloadData()
 
         /*
         * This listener emulates a kind of 'home-button' in the logo from
@@ -251,10 +252,9 @@ class MainActivity :
     *   it sets up the timers if necessary
     *
     * */
-    private fun setup(downloadData: Boolean): Unit {
+    private fun setupDownloadData(): Unit {
 
-        /* setup si hay conexión  */
-        if (downloadData) {
+        if (isDeviceConnectedToWifiOrData().first) {
 
             dialog = ProgressDialog(this, ProgressDialog.THEME_HOLO_LIGHT) // this = YourActivity
             dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER)
@@ -263,55 +263,61 @@ class MainActivity :
             dialog.setCanceledOnTouchOutside(false)
             dialog.show()
             downloadSpeakers()
-
         } else {
-            /* configuración del modo de trabajo */
-            autoMode = getAutoModeAndRoomName().first
-            roomName = getAutoModeAndRoomName().second
+            setupDataAlreadyDownloaded()
+        }
 
-            if (autoMode) {
+    }
 
-                if (roomName == resources.getString(R.string.pref_default_room_name)) {
+    private fun setupDataAlreadyDownloaded(): Unit {
 
-                    sharedPreferences.edit().putBoolean(PreferenceKeys.AUTO_MODE_KEY, false).commit()
-                    Toast.makeText(this, resources.getString(R.string.pref_default_room_name), Toast.LENGTH_SHORT).show()
-                    setChooseTalkFragment(CHOOSE_TALK_FRAGMENT)
+        /* configuración del modo de trabajo */
+        autoMode = getAutoModeAndRoomName().first
+        roomName = getAutoModeAndRoomName().second
 
-                } else { // autoMode and roomName set
+        if (autoMode) {
 
-                    /*
-                    * Aquesta estructura de dades associa cada talk amb un SessionTimes i un TalksLocation
-                    * Es a dir, a qué hora es fa cada talk i on
-                    * talkSchedules is a Map<Talk, Pair<SessionsTimes, TalksLocations>>
-                    *
-                    * */
+            if (roomName == resources.getString(R.string.pref_default_room_name)) {
 
-                    talkSchedules.clear()
-                    val talkDao: Dao<Talk, Int> = databaseHelper.getTalkDao()
+                sharedPreferences.edit().putBoolean(PreferenceKeys.AUTO_MODE_KEY, false).commit()
+                Toast.makeText(this, resources.getString(R.string.pref_default_room_name), Toast.LENGTH_SHORT).show()
+                setChooseTalkFragment(CHOOSE_TALK_FRAGMENT)
 
-                    talkDao.queryForAll().forEach {
+            } else { // autoMode and roomName set
 
-                        val scheduleId = it.scheduleId
-                        //                   0123456789012
-                        // scheduleId format #MON-TC1-SE1
-                        val sessionId = "${scheduleId.substring(1, 4)}-${scheduleId.substring(9, 12)}"
-                        val session = scheduleContentProvider.getSessionTimes(sessionId)
+                /*
+                * Aquesta estructura de dades associa cada talk amb un SessionTimes i un TalksLocation
+                * Es a dir, a qué hora es fa cada talk i on
+                * talkSchedules is a Map<Talk, Pair<SessionsTimes, TalksLocations>>
+                *
+                * */
 
-                        val venueId = "${scheduleId.substring(1, 4)}-${scheduleId.substring(5, 8)}"
-                        val location = venueContentProvider.getRoom(venueId)
-                        // crea una mapa de Talk y Pair<SessionsTimes, TalksLocation>
-                        talkSchedules[it] = session to location
+                talkSchedules.clear()
+                val talkDao: Dao<Talk, Int> = databaseHelper.getTalkDao()
 
-                    }
+                talkDao.queryForAll().forEach {
 
-                    setupTimer()
+                    val scheduleId = it.scheduleId
+                    //                   0123456789012
+                    // scheduleId format #MON-TC1-SE1
+                    val sessionId = "${scheduleId.substring(1, 4)}-${scheduleId.substring(9, 12)}"
+                    val session = scheduleContentProvider.getSessionTimes(sessionId)
+
+                    val venueId = "${scheduleId.substring(1, 4)}-${scheduleId.substring(5, 8)}"
+                    val location = venueContentProvider.getRoom(venueId)
+                    // crea una mapa de Talk y Pair<SessionsTimes, TalksLocation>
+                    talkSchedules[it] = session to location
 
                 }
 
-            } else { // autoMode is false ->  mode manual
-                setChooseTalkFragment(CHOOSE_TALK_FRAGMENT)
+                setupTimer()
+
             }
+
+        } else { // autoMode is false ->  mode manual
+            setChooseTalkFragment(CHOOSE_TALK_FRAGMENT)
         }
+
     }
 
     /*
@@ -330,13 +336,17 @@ class MainActivity :
 
         val today = GregorianCalendar.getInstance()
 
-        Log.d(TAG, "****** ${simpleDateFormatCSV.format(today.time)} ******")
+        Log.d(TAG, "****** ${simpleDateFormatCSV.format(today.time)} ${talkSchedules.size} ******")
 
         val talksToSchedule: MutableMap<Talk, Pair<SessionTimes, String>> = mutableMapOf()
 
-        /* Which list are candidates to schedule?  */
+        /* Which talks are candidates to schedule?  */
 
-        talkSchedules.forEach { talk: Talk, pairOfTimesAndLocations: Pair<SessionTimes, String> ->
+//        talkSchedules.forEach { talk: Talk, pairOfTimesAndLocations: Pair<SessionTimes, String> ->
+        talkSchedules.forEach {
+
+            val talk = it.key
+            val pairOfTimesAndLocations = it.value
 
             /* roomName es el nom de la room que gestionas aquesta tablet */
 
@@ -383,7 +393,7 @@ class MainActivity :
                         //.stream()
                         .sorted()
 
-                        //.collect(Collectors.toList())
+        //.collect(Collectors.toList())
 
         var nextTalkTitle = sortedOnlyTalksList[0].title
 
@@ -616,7 +626,7 @@ class MainActivity :
 
         //* setup de la parte sin conexión: en funcio de autoMode/roomName set or not  */
 
-        setup(false)
+        setupDataAlreadyDownloaded()
     }
 
     /*
@@ -1183,7 +1193,7 @@ class MainActivity :
         this.autoMode = autoMode
 
         if (autoMode) {
-            setup(false)
+            setupDataAlreadyDownloaded()
         } else {
             cancelTimer()
             setChooseTalkFragment("$CHOOSE_TALK_FRAGMENT$roomName")
