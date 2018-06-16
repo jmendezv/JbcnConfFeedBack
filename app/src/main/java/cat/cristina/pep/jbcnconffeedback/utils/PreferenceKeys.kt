@@ -9,5 +9,7 @@ class PreferenceKeys {
         const val AUTO_MODE_KEY = "auto_mode_key"
         const val EMAIL_KEY = "email_key"
         const val FILTERED_TALKS_KEY = "filtered_talks_rey"
+        const val OFFSET_DELAY_KEY = "offset_delay_key"
+        const val STATISTICS_TALK_LIMIT_KEY = "statistics_talk_limit_key"
     }
 }

@@ -47,6 +47,17 @@ class AppPreferenceFragment :
         summary = sharedPreferences.getString(PreferenceKeys.EMAIL_KEY, resources.getString(R.string.pref_default_email))
         preference = findPreference(PreferenceKeys.EMAIL_KEY)
         preference.summary = summary
+
+        // OFFSET Delay in minutes
+        summary = sharedPreferences.getString(PreferenceKeys.OFFSET_DELAY_KEY, resources.getString(R.string.pref_default_offset_delay))
+        preference = findPreference(PreferenceKeys.OFFSET_DELAY_KEY)
+        preference.summary = summary
+
+        // Statistics Talk Limit
+        summary = sharedPreferences.getString(PreferenceKeys.STATISTICS_TALK_LIMIT_KEY, resources.getString(R.string.pref_default_statistics_talk_limit))
+        preference = findPreference(PreferenceKeys.STATISTICS_TALK_LIMIT_KEY)
+        preference.summary = summary
+
     }
 
     override fun onResume() {
@@ -122,6 +133,18 @@ class AppPreferenceFragment :
 
             PreferenceKeys.EMAIL_KEY -> {
                 val summary = sharedPreferences!!.getString(key, resources.getString(R.string.pref_default_email))
+                preference.summary = summary
+                sharedPreferences.edit().putString(key, summary).commit()
+            }
+
+            PreferenceKeys.OFFSET_DELAY_KEY -> {
+                val summary = sharedPreferences!!.getString(key, resources.getString(R.string.pref_default_offset_delay))
+                preference.summary = summary
+                sharedPreferences.edit().putString(key, summary).commit()
+            }
+
+            PreferenceKeys.STATISTICS_TALK_LIMIT_KEY -> {
+                val summary = sharedPreferences!!.getString(key, resources.getString(R.string.pref_default_statistics_talk_limit))
                 preference.summary = summary
                 sharedPreferences.edit().putString(key, summary).commit()
             }

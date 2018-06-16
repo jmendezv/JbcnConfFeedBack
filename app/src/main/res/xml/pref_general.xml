@@ -1,5 +1,14 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <ListPreference
+        android:defaultValue="@string/pref_default_room_name"
+        android:entries="@array/pref_room_names_titles"
+        android:entryValues="@array/pref_room_names_values"
+        android:key="@string/pref_room_key"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_room_name" />
+
     <SwitchPreferenceCompat
         android:defaultValue="false"
         android:key="@string/pref_auto_mode_key"
@@ -17,14 +26,22 @@
         android:title="@string/pref_title_room_name" / -->
 
     <ListPreference
-        android:defaultValue="@string/pref_default_room_name"
-        android:entries="@array/pref_room_names_titles"
-        android:entryValues="@array/pref_room_names_values"
-        android:key="@string/pref_room_key"
+        android:defaultValue="@string/pref_default_offset_delay"
+        android:entries="@array/pref_offset_delay_titles"
+        android:entryValues="@array/pref_offset_delay_values"
+        android:key="@string/pref_offset_delay_key"
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
-        android:title="@string/pref_title_room_name" />
+        android:title="@string/pref_title_offset_delay" />
 
+    <ListPreference
+        android:defaultValue="@string/pref_default_statistics_talk_limit"
+        android:entries="@array/pref_statistics_talk_limit_titles"
+        android:entryValues="@array/pref_statistics_talk_limit_values"
+        android:key="@string/pref_statistics_talk_limit_key"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_statistics_talk_limit" />
 
     <SwitchPreferenceCompat
         android:defaultValue="false"

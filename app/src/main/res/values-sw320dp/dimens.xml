@@ -41,11 +41,11 @@
     <dimen name="cardview_height">150dp</dimen>
     <dimen name="cardview_corner_radius">4dp</dimen>
     <dimen name="inner_cardview_radius">20dp</dimen>
-    <dimen name="cardview_image_size">128dp</dimen>
+    <dimen name="cardview_image_size">145dp</dimen>
     <dimen name="cardview_talk_title">14sp</dimen>
     <dimen name="cardview_speaker_name">12sp</dimen>
-    <dimen name="cardview_scheduleId">8sp</dimen>
-    <dimen name="cardview_order">6sp</dimen>
+    <dimen name="cardview_scheduleId">10sp</dimen>
+    <dimen name="cardview_order">8sp</dimen>
 
     <!-- Welcome Fragment -->
     <dimen name="welcome_padding">80dp</dimen>

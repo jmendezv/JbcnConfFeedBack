@@ -107,6 +107,8 @@ dependencies {
     implementation 'com.android.support:preference-v14:27.1.1'
     implementation 'com.opencsv:opencsv:4.1'
     //implementation files('build/libs/openbeans-1.0.jar')
+
+    implementation 'de.hdodenhof:circleimageview:2.2.0'
 }
 
 apply plugin: 'com.google.gms.google-services'
