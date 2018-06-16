@@ -15,10 +15,12 @@ import android.util.Log
 import android.view.*
 import android.widget.Toast
 import cat.cristina.pep.jbcnconffeedback.R
+import cat.cristina.pep.jbcnconffeedback.R.id.barChart
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
 import cat.cristina.pep.jbcnconffeedback.model.DatabaseHelper
 import cat.cristina.pep.jbcnconffeedback.model.Talk
 import cat.cristina.pep.jbcnconffeedback.model.UtilDAOImpl
+import cat.cristina.pep.jbcnconffeedback.utils.PreferenceKeys
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
@@ -123,7 +125,8 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
                             it.getLong(MainActivity.FIREBASE_COLLECTION_FIELD_TALK_ID)
                             //it.getString(MainActivity.FIREBASE_COLLECTION_FIELD_SCHEDULE_ID)?.hashCode()
                         }
-                        setupGraphTopNTalks(10)
+                        val numTalks = Integer.parseInt(sharedPreferences!!.getString(PreferenceKeys.STATISTICS_TALK_LIMIT_KEY, resources.getString(R.string.pref_default_statistics_talk_limit)))
+                        setupGraphTopNTalks(numTalks)
                     } else {
                         dialog.dismiss()
                         Toast.makeText(context, R.string.sorry_no_graphic_available, Toast.LENGTH_LONG).show()
