@@ -37,6 +37,17 @@ class ChooseTalkFragment : Fragment() {
     private var dateStr: String? = null
     private var isLogIn: Boolean = false
 
+    private fun setup(): Unit {
+
+        val date = simpleDateFormat.parse(dateStr)
+        val hour = GregorianCalendar().get(Calendar.HOUR_OF_DAY)
+        val minutes = GregorianCalendar().get(Calendar.MINUTE)
+        date.time = date.time + ((hour * 60 + minutes) * 60 * 1_000)
+        talkContent = TalkContent(activity!!, date)
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -46,13 +57,14 @@ class ChooseTalkFragment : Fragment() {
             dateStr = it.getString(ARG_DATE)
             isLogIn = it.getBoolean(ARG_IS_LOG_IN)
         }
-        val date = simpleDateFormat.parse(dateStr)
-        val hour = GregorianCalendar().get(Calendar.HOUR_OF_DAY)
-        val minutes = GregorianCalendar().get(Calendar.MINUTE)
-        date.time = date.time + ((hour * 60 + minutes) * 60 * 1_000)
-        talkContent = TalkContent(activity!!, date)
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+
+        setup()
         setHasOptionsMenu(true)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setup()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,

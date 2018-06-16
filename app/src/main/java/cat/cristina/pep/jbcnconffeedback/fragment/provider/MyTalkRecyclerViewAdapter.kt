@@ -65,8 +65,8 @@ class MyTalkRecyclerViewAdapter(
                 .supportFragmentManager
                 .findFragmentByTag(MainActivity.ASSETS_MANAGER_FRAGMENT) as AssetsManagerFragment
 
-        scheduleContentProvider = assetsManagerFragment.scheduleContentProvider
-        venueContentProvider = assetsManagerFragment.venueContentProvider
+        scheduleContentProvider = assetsManagerFragment.scheduleContentProvider!!
+        venueContentProvider = assetsManagerFragment.venueContentProvider!!
 
     }
 

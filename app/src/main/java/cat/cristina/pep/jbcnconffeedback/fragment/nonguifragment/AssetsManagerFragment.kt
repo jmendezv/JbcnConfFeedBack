@@ -47,6 +47,8 @@ class AssetsManagerFragment : Fragment() {
         }
         retainInstance = true
 
+        setup()
+
     }
 
     override fun onResume() {
