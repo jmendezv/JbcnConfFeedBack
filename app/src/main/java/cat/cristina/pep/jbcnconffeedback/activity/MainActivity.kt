@@ -352,8 +352,8 @@ class MainActivity :
 
             if (roomName == pairOfTimesAndLocations.second) {
 
-                /* Aixo evita timers que ja ha passar el temps de votació */
-                if (today.before(pairOfTimesAndLocations.first.endScheduleDateTime)) {
+                /* Aixo evita timers que ja ha passat el temps de votació */
+                if (today.before(pairOfTimesAndLocations.first.endVotingDateTime)) {
 
                     /* compare today amb les dates de cada talk pero nomes dia, mes i any YEAR/MONTH/DATE is the same for start/end talk date  */
 
@@ -395,16 +395,13 @@ class MainActivity :
 
         //.collect(Collectors.toList())
 
+        /* Posem el primer welcomefragment  */
+
         var nextTalkTitle = sortedOnlyTalksList[0].title
-
         nextTalkTitle = if (nextTalkTitle.length > 75) nextTalkTitle.substring(0, 75) + "..." else nextTalkTitle
-
         var speakerRef = sortedOnlyTalksList[0].speakers?.get(0)
-
         var speakerName = utilDAOImpl.lookupSpeakerByRef(speakerRef!!).name
-
         nextTalkTitle = "Next talk: '$nextTalkTitle' By $speakerName"
-
         switchFragment(WelcomeFragment.newInstance(roomName, nextTalkTitle), WELCOME_FRAGMENT, false)
 
         // from 0 to timersCount - 1
@@ -421,17 +418,19 @@ class MainActivity :
             val timesAndLocations = talksToSchedule[thisTalk]
 
             /* Aquest calcul determina el temps que resta en milliseconds fins a cada final de talk cosiderant el offset!!  */
-            val startTime = timesAndLocations?.first!!.startScheduleDateTime.time.time - System.currentTimeMillis()
-            val endTime = timesAndLocations.first.endScheduleDateTime.time.time - System.currentTimeMillis()
+            val showVoteFragmentDelay = timesAndLocations?.first!!.startVotingDateTime.time.time - System.currentTimeMillis()
+            val showWelcomeFragmentDelay = timesAndLocations.first.endVotingDateTime.time.time - System.currentTimeMillis()
+
+            //Log.d(TAG, "delays... vote delay $showVoteFragmentDelay welcome delay $showWelcomeFragmentDelay")
 
             /* Aixo formata el temps que queda perque comenci i acabi l'event actual*/
-            val remainingStartTime = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(startTime),
-                    TimeUnit.MILLISECONDS.toMinutes(startTime) % TimeUnit.HOURS.toMinutes(1),
-                    TimeUnit.MILLISECONDS.toSeconds(startTime) % TimeUnit.MINUTES.toSeconds(1))
+            val remainingStartTime = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(showVoteFragmentDelay),
+                    TimeUnit.MILLISECONDS.toMinutes(showVoteFragmentDelay) % TimeUnit.HOURS.toMinutes(1),
+                    TimeUnit.MILLISECONDS.toSeconds(showVoteFragmentDelay) % TimeUnit.MINUTES.toSeconds(1))
 
-            val remainingStopTime = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(endTime),
-                    TimeUnit.MILLISECONDS.toMinutes(endTime) % TimeUnit.HOURS.toMinutes(1),
-                    TimeUnit.MILLISECONDS.toSeconds(endTime) % TimeUnit.MINUTES.toSeconds(1))
+            val remainingStopTime = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(showWelcomeFragmentDelay),
+                    TimeUnit.MILLISECONDS.toMinutes(showWelcomeFragmentDelay) % TimeUnit.HOURS.toMinutes(1),
+                    TimeUnit.MILLISECONDS.toSeconds(showWelcomeFragmentDelay) % TimeUnit.MINUTES.toSeconds(1))
 
             /* Dos runnables, un que posara el fragment VoteFragment i un altre que posarà el fragment WelcomeFragment  */
             val timerTaskIn = Runnable {
@@ -476,8 +475,8 @@ class MainActivity :
 
             /* Finalment posem en marxa el scheduler  */
 
-            scheduledFutures?.add(scheduledExecutorService?.schedule(timerTaskIn, startTime, TimeUnit.MILLISECONDS))
-            scheduledFutures?.add(scheduledExecutorService?.schedule(timerTaskOff, endTime, TimeUnit.MILLISECONDS))
+            scheduledFutures?.add(scheduledExecutorService?.schedule(timerTaskIn, showVoteFragmentDelay, TimeUnit.MILLISECONDS))
+            scheduledFutures?.add(scheduledExecutorService?.schedule(timerTaskOff, showWelcomeFragmentDelay, TimeUnit.MILLISECONDS))
 
             Log.d(TAG, "Setting schedule for talk $thisTalk starts in $remainingStartTime ends in $remainingStopTime")
 

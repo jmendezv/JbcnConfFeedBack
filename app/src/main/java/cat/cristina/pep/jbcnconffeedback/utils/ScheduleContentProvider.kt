@@ -38,19 +38,6 @@ class ScheduleContentProvider(val context: Context, private val fileName: String
         return scheduleMap[id]!!.second
     }
 
-    private fun getStartScheduleDateTime(id: String): Calendar {
-        val calendar = getEndTalkDateTime(id)
-        calendar.set(Calendar.MINUTE, calendar.get(Calendar.MINUTE) - OFFSET)
-        return calendar
-    }
-
-    private fun getEndScheduleDateTime(id: String): Calendar {
-        val calendar = getEndTalkDateTime(id)
-        calendar.set(Calendar.MINUTE, calendar.get(Calendar.MINUTE) + OFFSET)
-        return calendar
-    }
-
-
     private fun readData(fileName: String) =
             context.assets.open(fileName).bufferedReader().readText()
 
@@ -67,7 +54,7 @@ class ScheduleContentProvider(val context: Context, private val fileName: String
         for (index in 0 until (schedules.length())) {
             val scheduleObject = schedules.getJSONObject(index)
             val schedule: Schedule = gson.fromJson(scheduleObject.toString(), Schedule::class.java)
-            val simpleDateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+            //val simpleDateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
             val start = GregorianCalendar()
             start.time = schedule.start
             val end = GregorianCalendar()

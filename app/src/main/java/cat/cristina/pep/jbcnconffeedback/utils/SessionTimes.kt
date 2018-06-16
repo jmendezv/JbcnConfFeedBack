@@ -5,17 +5,18 @@ import java.util.*
 data class SessionTimes(
         val startTalkDateTime: Calendar,
         val endTalkDateTime: Calendar,
-        val offsetInMinutes: Int = 15) {
+        private val offsetInMinutes: Int = 15) {
 
-    var startScheduleDateTime: Calendar
-    var endScheduleDateTime: Calendar
+    var startVotingDateTime: Calendar = GregorianCalendar()
+    var endVotingDateTime: Calendar = GregorianCalendar()
 
     init {
-        startScheduleDateTime = endTalkDateTime
-        startScheduleDateTime
-                .set(Calendar.MINUTE, startScheduleDateTime.get(Calendar.MINUTE) - offsetInMinutes)
-        endScheduleDateTime = endTalkDateTime
-        endScheduleDateTime
-                .set(Calendar.MINUTE, endScheduleDateTime.get(Calendar.MINUTE) + offsetInMinutes)
+        startVotingDateTime.time = endTalkDateTime.time
+        startVotingDateTime
+                .add(Calendar.MINUTE, -offsetInMinutes)
+
+        endVotingDateTime.time = endTalkDateTime.time
+        endVotingDateTime
+                .add(Calendar.MINUTE, offsetInMinutes)
     }
 }
