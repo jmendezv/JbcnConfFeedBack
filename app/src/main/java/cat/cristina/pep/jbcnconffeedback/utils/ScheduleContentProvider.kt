@@ -9,11 +9,11 @@ import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.*
 
-private const val OFFSET = 15
+// private const val OFFSET = 15
 
 private val TAG = ScheduleContentProvider::class.java.name
 
-class ScheduleContentProvider(val context: Context, private val fileName: String) {
+class ScheduleContentProvider(val context: Context, private val fileName: String, val offset: Int = 15) {
 
     private var scheduleMap: MutableMap<String, Pair<Calendar, Calendar>> = mutableMapOf()
 
@@ -24,7 +24,7 @@ class ScheduleContentProvider(val context: Context, private val fileName: String
     }
 
     public fun getSessionTimes(id: String): SessionTimes =
-            SessionTimes(getStartTalkDateTime(id), getEndTalkDateTime(id), OFFSET)
+            SessionTimes(getStartTalkDateTime(id), getEndTalkDateTime(id), offset)
 
     /*
     * id format is 'MON-SE1'

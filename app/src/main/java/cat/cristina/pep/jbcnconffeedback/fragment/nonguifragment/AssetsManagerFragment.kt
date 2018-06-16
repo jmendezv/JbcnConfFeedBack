@@ -2,11 +2,14 @@ package cat.cristina.pep.jbcnconffeedback.fragment.nonguifragment
 
 import android.content.Context
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import cat.cristina.pep.jbcnconffeedback.R
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
+import cat.cristina.pep.jbcnconffeedback.utils.PreferenceKeys
 import cat.cristina.pep.jbcnconffeedback.utils.ScheduleContentProvider
 import cat.cristina.pep.jbcnconffeedback.utils.VenueContentProvider
 
@@ -30,8 +33,8 @@ class AssetsManagerFragment : Fragment() {
     private var param2: String? = null
     private var listener: AssetsManagerFragmentListener? = null
 
-    lateinit var scheduleContentProvider: ScheduleContentProvider
-    lateinit var venueContentProvider: VenueContentProvider
+    var scheduleContentProvider: ScheduleContentProvider? = null
+    var venueContentProvider: VenueContentProvider? = null
 
     /*
     * Retain this fragment across configuration changes.
@@ -44,9 +47,11 @@ class AssetsManagerFragment : Fragment() {
         }
         retainInstance = true
 
-        scheduleContentProvider = ScheduleContentProvider(context!!, MainActivity.JBCNCONF_JSON_SCHEDULES_FILE_NAME)
-        venueContentProvider = VenueContentProvider(context!!, MainActivity.JBCNCONF_JSON_VENUES_FILE_NAME)
+    }
 
+    override fun onResume() {
+        super.onResume()
+        setup()
     }
 
     /* No GUI Fragment, must return null */
@@ -72,6 +77,17 @@ class AssetsManagerFragment : Fragment() {
     override fun onDetach() {
         super.onDetach()
         listener = null
+    }
+
+    private fun setup(): Unit {
+
+        val offsetDelay= Integer
+                .parseInt(PreferenceManager
+                        .getDefaultSharedPreferences(context)
+                        .getString(PreferenceKeys.OFFSET_DELAY_KEY, resources.getString(R.string.pref_default_offset_delay)))
+
+        scheduleContentProvider = ScheduleContentProvider(context!!, MainActivity.JBCNCONF_JSON_SCHEDULES_FILE_NAME, offsetDelay)
+        venueContentProvider = VenueContentProvider(context!!, MainActivity.JBCNCONF_JSON_VENUES_FILE_NAME)
     }
 
     /**

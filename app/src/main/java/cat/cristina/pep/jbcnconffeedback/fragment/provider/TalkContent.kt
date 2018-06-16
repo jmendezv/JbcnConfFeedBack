@@ -46,8 +46,8 @@ class TalkContent(val context: Context, val date: Date) {
                 .supportFragmentManager
                 .findFragmentByTag(MainActivity.ASSETS_MANAGER_FRAGMENT) as AssetsManagerFragment
 
-        scheduleContentProvider = assetsManagerFragment.scheduleContentProvider
-        venueContentProvider = assetsManagerFragment.venueContentProvider
+        scheduleContentProvider = assetsManagerFragment.scheduleContentProvider!!
+        venueContentProvider = assetsManagerFragment.venueContentProvider!!
 
         utilDAOImpl = UtilDAOImpl(context, databaseHelper)
         talkDao = databaseHelper.getTalkDao()

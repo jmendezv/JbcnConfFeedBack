@@ -220,8 +220,8 @@ class MainActivity :
 
         val assetsManagerFragment = supportFragmentManager
                 .findFragmentByTag(ASSETS_MANAGER_FRAGMENT) as AssetsManagerFragment
-        scheduleContentProvider = assetsManagerFragment.scheduleContentProvider
-        venueContentProvider = assetsManagerFragment.venueContentProvider
+        scheduleContentProvider = assetsManagerFragment.scheduleContentProvider!!
+        venueContentProvider = assetsManagerFragment.venueContentProvider!!
     }
 
     /*
