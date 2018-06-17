@@ -24,10 +24,13 @@ import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.formatter.IAxisValueFormatter
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
+import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.listener.ChartTouchListener
 import com.github.mikephil.charting.listener.OnChartGestureListener
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import com.github.mikephil.charting.utils.ColorTemplate
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QueryDocumentSnapshot
@@ -48,7 +51,7 @@ private val TAG = StatisticsFragment::class.java.name
 
 /**
  */
-class StatisticsFragment : Fragment(), OnChartGestureListener {
+class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
 
     private val TAG = StatisticsFragment::class.java.name
 
@@ -60,6 +63,7 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
     private lateinit var databaseHelper: DatabaseHelper
     lateinit var sharedPreferences: SharedPreferences
     private var bestTalks: Boolean = true
+    private lateinit var talksToDisplay: List<Pair<String, Double>>
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -183,7 +187,7 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
             //setFitBars(true)
             setBorderColor(Color.BLACK)
             setTouchEnabled(true)
-            onChartGestureListener = this@StatisticsFragment
+            //onChartGestureListener = this@StatisticsFragment
             animateY(1_000)
             legend.isEnabled = false
             legend.textColor = Color.GRAY
@@ -277,6 +281,9 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
                         .subList(0, limit)
             }
 
+
+            talksToDisplay = firstNTalks
+
             val maxAvg = if (bestTalks) firstNTalks.first().second else firstNTalks.last().second
 
             for (pair: Pair<String, Double> in firstNTalks) {
@@ -324,12 +331,12 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
                 setDrawBorders(true)
                 setBorderColor(Color.BLACK)
                 setTouchEnabled(true)
-                // onChartGestureListener = this@StatisticsFragment
+                //onChartGestureListener = this@StatisticsFragment
                 animateXY(2_500, 5_000)
                 legend.isEnabled = false
 //            legend.textColor = Color.GRAY
 //            legend.textSize = 15F
-
+                setOnChartValueSelectedListener(this@StatisticsFragment)
                 notifyDataSetChanged()
                 invalidate()
             }
@@ -417,6 +424,25 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
         fun onStatisticsFragmentInteraction(msg: String)
     }
 
+    /**
+     * Called when nothing has been selected or an "un-select" has been made.
+     */
+    override fun onNothingSelected() {
+        Log.d(TAG, "onNothingSelected")
+    }
+
+    /**
+     * Called when a value has been selected inside the chart.
+     *
+     * @param e The selected Entry
+     * @param h The corresponding highlight object that contains information
+     * about the highlighted position such as dataSetIndex, ...
+     */
+    override fun onValueSelected(e: Entry?, h: Highlight?) {
+        Log.d(TAG, "${talksToDisplay[e?.x?.toInt()!!]} $h")
+    }
+
+
     companion object {
         /**
          */
@@ -430,78 +456,4 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
                 }
     }
 
-    /**
-     * Callbacks when a touch-gesture has ended on the chart (ACTION_UP, ACTION_CANCEL)
-     *
-     * @param me
-     * @param lastPerformedGesture
-     */
-    override fun onChartGestureEnd(me: MotionEvent?, lastPerformedGesture: ChartTouchListener.ChartGesture?) {
-    }
-
-    /**
-     * Callbacks then a fling gesture is made on the chart.
-     *
-     * @param me1
-     * @param me2
-     * @param velocityX
-     * @param velocityY
-     */
-    override fun onChartFling(me1: MotionEvent?, me2: MotionEvent?, velocityX: Float, velocityY: Float) {
-    }
-
-    /**
-     * Callbacks when the chart is single-tapped.
-     *
-     * @param me
-     */
-    override fun onChartSingleTapped(me: MotionEvent?) {
-        Log.d(TAG, "singledTap ${me.toString()}")
-
-    }
-
-    /**
-     * Callbacks when a touch-gesture has started on the chart (ACTION_DOWN)
-     *
-     * @param me
-     * @param lastPerformedGesture
-     */
-    override fun onChartGestureStart(me: MotionEvent?, lastPerformedGesture: ChartTouchListener.ChartGesture?) {
-    }
-
-    /**
-     * Callbacks when the chart is scaled / zoomed via pinch zoom gesture.
-     *
-     * @param me
-     * @param scaleX scalefactor on the x-axis
-     * @param scaleY scalefactor on the y-axis
-     */
-    override fun onChartScale(me: MotionEvent?, scaleX: Float, scaleY: Float) {
-    }
-
-    /**
-     * Callbacks when the chart is longpressed.
-     *
-     * @param me
-     */
-    override fun onChartLongPressed(me: MotionEvent?) {
-    }
-
-    /**
-     * Callbacks when the chart is double-tapped.
-     *
-     * @param me
-     */
-    override fun onChartDoubleTapped(me: MotionEvent?) {
-    }
-
-    /**
-     * Callbacks when the chart is moved / translated via drag gesture.
-     *
-     * @param me
-     * @param dX translation distance on the x-axis
-     * @param dY translation distance on the y-axis
-     */
-    override fun onChartTranslate(me: MotionEvent?, dX: Float, dY: Float) {
-    }
 }
