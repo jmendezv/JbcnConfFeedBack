@@ -17,7 +17,6 @@ import android.widget.Toast
 import cat.cristina.pep.jbcnconffeedback.R
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
 import cat.cristina.pep.jbcnconffeedback.model.DatabaseHelper
-import cat.cristina.pep.jbcnconffeedback.model.Talk
 import cat.cristina.pep.jbcnconffeedback.model.UtilDAOImpl
 import cat.cristina.pep.jbcnconffeedback.utils.PreferenceKeys
 import com.github.mikephil.charting.components.XAxis
@@ -28,14 +27,11 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.formatter.IAxisValueFormatter
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
-import com.github.mikephil.charting.listener.ChartTouchListener
-import com.github.mikephil.charting.listener.OnChartGestureListener
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import com.github.mikephil.charting.utils.ColorTemplate
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.j256.ormlite.android.apptools.OpenHelperManager
-import com.j256.ormlite.dao.Dao
 import com.opencsv.CSVWriter
 import com.opencsv.bean.ColumnPositionMappingStrategy
 import com.opencsv.bean.StatefulBeanToCsvBuilder
@@ -63,7 +59,8 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
     private lateinit var databaseHelper: DatabaseHelper
     lateinit var sharedPreferences: SharedPreferences
     private var bestTalks: Boolean = true
-    private lateinit var talksToDisplay: List<Pair<String, Double>>
+    // List<Pair<title, avg>>
+    private lateinit var talksToDisplay: List<Triple<Long?, String, Double>>
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -96,13 +93,6 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
     }
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-//        when (item?.itemId) {
-//            R.id.action_send_statistics -> {
-//                createCVSFromStatistics(DEFAULT_STATISTICS_FILE_NAME)
-//                sendCSVByEmail(DEFAULT_STATISTICS_FILE_NAME)
-//            }
-//
-//        }
         return true
     }
 
@@ -130,7 +120,8 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
                             it.getLong(MainActivity.FIREBASE_COLLECTION_FIELD_TALK_ID)
                             //it.getString(MainActivity.FIREBASE_COLLECTION_FIELD_SCHEDULE_ID)?.hashCode()
                         }
-                        val numTalks = Integer.parseInt(sharedPreferences!!.getString(PreferenceKeys.STATISTICS_TALK_LIMIT_KEY, resources.getString(R.string.pref_default_statistics_talk_limit)))
+                        val numTalks = Integer
+                                .parseInt(sharedPreferences!!.getString(PreferenceKeys.STATISTICS_TALK_LIMIT_KEY, resources.getString(R.string.pref_default_statistics_talk_limit)))
                         setupGraphTopNTalks(numTalks)
                     } else {
                         dialog.dismiss()
@@ -138,67 +129,6 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
                         //Log.d(TAG, "*** Error *** ${it.exception?.message}")
                     }
                 }
-    }
-
-    /*
-    * Not used
-    *
-    * */
-    private fun setupGraph() {
-        dialog.setMessage(resources.getString(R.string.processing));
-        val labels = ArrayList<String>()
-        val entries = ArrayList<BarEntry>()
-        var i = 0.0F
-
-        dataFromFirestore
-                ?.asSequence()
-                ?.sortedBy {
-                    it.key
-                }
-                ?.forEach {
-                    labels.add("Talk jhgkg kgkhg hkghg #${it.key}")
-                    val avg: Double? = dataFromFirestore?.get(it.key)
-                            ?.asSequence()
-                            ?.map { doc ->
-                                doc.get("score") as Long
-                            }?.average()
-                    entries.add(BarEntry(i++, avg!!.toFloat()))
-                }
-
-        val barDataSet: BarDataSet = BarDataSet(entries, "Score")
-
-        with(barDataSet) {
-            colors = ColorTemplate.COLORFUL_COLORS.asList()
-            barBorderColor = Color.BLACK
-        }
-
-        val barData: BarData = BarData(barDataSet)
-
-        with(barChart) {
-            data = barData
-            xAxis.valueFormatter = IndexAxisValueFormatter(labels)
-            xAxis.setDrawLabels(true)
-            xAxis.position = XAxis.XAxisPosition.BOTTOM
-            xAxis.labelCount = labels.size
-            fitScreen()
-            description.isEnabled = false
-            setDrawBarShadow(true)
-            setDrawValueAboveBar(true)
-            //setFitBars(true)
-            setBorderColor(Color.BLACK)
-            setTouchEnabled(true)
-            //onChartGestureListener = this@StatisticsFragment
-            animateY(1_000)
-            legend.isEnabled = false
-            legend.textColor = Color.GRAY
-            legend.textSize = 15F
-
-            notifyDataSetChanged()
-            invalidate()
-        }
-
-        dialog.dismiss()
-
     }
 
     private fun isLargeDevice(): Boolean =
@@ -209,11 +139,11 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
         try {
             dialog.setMessage(resources.getString(R.string.processing))
             // Pair<title, avg>
-            val titleAndAvg = ArrayList<Pair<String, Double>>()
+            val listOfIdTitleAndAvg = ArrayList<Triple<Long?, String, Double>>()
             val labels = ArrayList<String>()
             val entries = ArrayList<BarEntry>()
             var index = 0.0F
-            val talkDao: Dao<Talk, Int> = databaseHelper.getTalkDao()
+            //val talkDao: Dao<Talk, Int> = databaseHelper.getTalkDao()
             val utilDAOImpl = UtilDAOImpl(context!!, databaseHelper)
 
             dataFromFirestore
@@ -231,18 +161,6 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
                                     doc.get(MainActivity.FIREBASE_COLLECTION_FIELD_SCORE) as Long
                                 }?.average()
 
-//                        val summary = dataFromFirestore
-//                                ?.get(it.key)
-//                                ?.stream()
-//                                ?.map { doc ->
-//                                    doc.get(MainActivity.FIREBASE_COLLECTION_FIELD_SCORE) as Long
-//                                }
-//                                ?.collect(Collectors.toList())
-//                                ?.stream()
-//                                ?.collect(Collectors.summarizingLong {
-//                                    it
-//                                })
-
                         try {
                             val talk = utilDAOImpl.lookupTalkByGivenId(it.key!!.toInt())
                             var title: String = talk.title
@@ -250,46 +168,39 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
                             var author = utilDAOImpl.lookupSpeakerByRef(refAuthor!!).name
 
                             /* Si el nombre es demasiado largo se saldra de la barra  */
-                            author = author.substring(0, 1) + "." + author.substring(author.indexOf(" "))
+                            author = author.substring(0, 1) + "." + author.substring(author.indexOf(" ") + 1)
                             title = if (title.length > 35) "'${StringBuilder(title.substring(0, 35)).toString()}...' by $author. ($votes votes)"
                             else "'$title' by $author. ($votes votes)"
-                            titleAndAvg.add(Pair(title, avg!!))
+                            listOfIdTitleAndAvg.add(Triple(it.key, title, avg!!))
                             // Log.d(TAG, "************************************ $title $avg")
                         } catch (error: Exception) {
                             Log.d(TAG, "***** datafromfirestori ******************* conflicting key  ${it.key}  ${error.printStackTrace(System.err)}")
                         }
                     }
 
-            // API Level 24 min is 23
-//            val firstTen = titleAndAvg
-//                    .stream()
-//                    .sorted { pair1, pair2 -> if (pair1.second < pair2.second) 1 else if (pair1.second == pair2.second) 0 else -1 }
-//                    .limit(limit)
-//                    .collect(Collectors.toList())
-
             val firstNTalks = if (bestTalks) {
-                titleAndAvg
-                        .sortedWith(compareBy { it.second })
+                listOfIdTitleAndAvg
+                        .sortedWith(compareBy { it.third })
                         .asReversed()
                         // .sortedByDescending {it.second }
-                        .subList(0, limit)
+                        .subList(0, Math.min(limit, listOfIdTitleAndAvg.size))
             } else {
-                titleAndAvg
-                        .sortedWith(compareBy { it.second })
+                listOfIdTitleAndAvg
+                        .sortedWith(compareBy { it.third })
                         //.asReversed()
                         // .sortedByDescending {it.second }
-                        .subList(0, limit)
+                        .subList(0, Math.min(limit, listOfIdTitleAndAvg.size))
             }
 
 
             talksToDisplay = firstNTalks
 
-            val maxAvg = if (bestTalks) firstNTalks.first().second else firstNTalks.last().second
+            val maxAvg = if (bestTalks) firstNTalks.first().third else firstNTalks.last().third
 
-            for (pair: Pair<String, Double> in firstNTalks) {
+            for (triple in firstNTalks) {
                 //Log.d(TAG, "************************************ ${pair.first} ${pair.second}")
-                entries.add(BarEntry(index++, pair.second.toFloat()))
-                var title: String = pair.first
+                entries.add(BarEntry(index++, triple.third.toFloat()))
+                var title: String = triple.second
                 //title = StringBuilder(title).append(" (${String.format("%.2f", pair.second)})").toString()
                 labels.add(title)
             }
@@ -399,9 +310,8 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
         Log.d(TAG, fileWriter.toString())
     }
 
-
-    fun onButtonPressed(msg: String) {
-        listenerStatistics?.onStatisticsFragmentInteraction(msg)
+    fun onButtonPressed(givenTalkId: Long?) {
+        listenerStatistics?.onStatisticsFragmentInteraction(givenTalkId)
     }
 
     override fun onAttach(context: Context) {
@@ -421,7 +331,7 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
     /**
      */
     interface StatisticsFragmentListener {
-        fun onStatisticsFragmentInteraction(msg: String)
+        fun onStatisticsFragmentInteraction(givenTalkId: Long?)
     }
 
     /**
@@ -434,12 +344,15 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
     /**
      * Called when a value has been selected inside the chart.
      *
-     * @param e The selected Entry
-     * @param h The corresponding highlight object that contains information
+     * @param entry The selected Entry
+     * @param highlight The corresponding highlight object that contains information
      * about the highlighted position such as dataSetIndex, ...
      */
-    override fun onValueSelected(e: Entry?, h: Highlight?) {
-        Log.d(TAG, "${talksToDisplay[e?.x?.toInt()!!]} $h")
+    override fun onValueSelected(entry: Entry?, highlight: Highlight?) {
+        val index = entry?.x?.toInt()!!
+        val tripleIdTitleAvg = talksToDisplay[index]
+        //Log.d(TAG, "id ${ttd.first} title ${ttd.second} avg ${ttd.third}")
+        onButtonPressed(tripleIdTitleAvg.first)
     }
 
 

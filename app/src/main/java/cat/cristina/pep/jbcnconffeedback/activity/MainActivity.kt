@@ -104,7 +104,8 @@ class MainActivity :
         DatePickerDialogFragment.DatePickerDialogFragmentListener,
         AreYouSureDialogFragment.AreYouSureDialogFragmentListener,
         PersonalStuffDialogFragment.OnPersonalStuffDialogFragmentListener,
-        AssetsManagerFragment.AssetsManagerFragmentListener {
+        AssetsManagerFragment.AssetsManagerFragmentListener,
+        PieChartDialogFragment.PieChartDialogFragmentListener {
 
     private lateinit var databaseHelper: DatabaseHelper
     private lateinit var utilDAOImpl: UtilDAOImpl
@@ -1195,10 +1196,14 @@ class MainActivity :
 
 
     /*
-    * This method might be called eventually from the StatisticsFragment
-    * to respond to chart user events
+    * This method computes how many votes of every possible value has this talk
+    * and shows a DialogFragment with PieChart
+    *
     * */
-    override fun onStatisticsFragmentInteraction(msg: String) {
+    override fun onStatisticsFragmentInteraction(givenTalkId: Long?) {
+        val fragment = PieChartDialogFragment.newInstance(givenTalkId!!)
+        fragment.show(supportFragmentManager, MainActivity.PIE_CHART_DIALOG_FRAGMENT)
+
     }
 
     /*
@@ -1320,6 +1325,13 @@ class MainActivity :
     }
 
     /*
+    * This method might get called from PieChartDialogFragmentInteraction eventually
+    *
+    * */
+    override fun onPieChartDialogFragmentInteraction(msg: String) {
+    }
+
+    /*
     * Static-like Kotlin style declarations
     *
     * */
@@ -1341,6 +1353,7 @@ class MainActivity :
         const val DATE_PICKER_FRAGMENT = "DatePickerFragment"
         const val ARE_YOU_SURE_DIALOG_FRAGMENT = "AreYouSureDialogFragment"
         const val PERSONAL_STUFF_DIALOG_FRAGMENT = "PersonalStuffDialogFragment"
+        const val PIE_CHART_DIALOG_FRAGMENT = "PieChartDialogFragment"
 
         // const val JBCNCONF_JSON_SCHEDULES_FILE_NAME = "schedules.json"
         const val JBCNCONF_JSON_SCHEDULES_FILE_NAME = "schedules_fake.json"
