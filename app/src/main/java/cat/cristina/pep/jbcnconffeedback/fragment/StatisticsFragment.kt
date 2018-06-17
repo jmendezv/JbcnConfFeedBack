@@ -15,7 +15,6 @@ import android.util.Log
 import android.view.*
 import android.widget.Toast
 import cat.cristina.pep.jbcnconffeedback.R
-import cat.cristina.pep.jbcnconffeedback.R.id.barChart
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
 import cat.cristina.pep.jbcnconffeedback.model.DatabaseHelper
 import cat.cristina.pep.jbcnconffeedback.model.Talk
@@ -60,6 +59,7 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
     private lateinit var dialog: ProgressDialog
     private lateinit var databaseHelper: DatabaseHelper
     lateinit var sharedPreferences: SharedPreferences
+    private var bestTalks: Boolean = true
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,6 +71,7 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
         setHasOptionsMenu(true)
         databaseHelper = OpenHelperManager.getHelper(activity, DatabaseHelper::class.java)
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        bestTalks = sharedPreferences.getBoolean(PreferenceKeys.STATISTICS_BEST_TALKS_KEY, true)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -262,14 +263,23 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
 //                    .limit(limit)
 //                    .collect(Collectors.toList())
 
-            val firstTen = titleAndAvg
-                    .sortedWith(compareBy({ it.second })).asReversed()
-            // .sortedByDescending {it.second }
-            .subList(0, limit)
+            val firstNTalks = if (bestTalks) {
+                titleAndAvg
+                        .sortedWith(compareBy { it.second })
+                        .asReversed()
+                        // .sortedByDescending {it.second }
+                        .subList(0, limit)
+            } else {
+                titleAndAvg
+                        .sortedWith(compareBy { it.second })
+                        //.asReversed()
+                        // .sortedByDescending {it.second }
+                        .subList(0, limit)
+            }
 
-            val maxAvg = firstTen.first().second
+            val maxAvg = if (bestTalks) firstNTalks.first().second else firstNTalks.last().second
 
-            for (pair: Pair<String, Double> in firstTen) {
+            for (pair: Pair<String, Double> in firstNTalks) {
                 //Log.d(TAG, "************************************ ${pair.first} ${pair.second}")
                 entries.add(BarEntry(index++, pair.second.toFloat()))
                 var title: String = pair.first
@@ -298,7 +308,7 @@ class StatisticsFragment : Fragment(), OnChartGestureListener {
                 xAxis.position = XAxis.XAxisPosition.BOTTOM_INSIDE
                 xAxis.xOffset = if (isLargeDevice()) 600.0F else 400.0F
                 xAxis.yOffset = 100.0F
-                xAxis.setLabelCount(firstTen!!.size, false)
+                xAxis.setLabelCount(firstNTalks!!.size, false)
                 axisLeft.axisMinimum = 0.0F
                 //axisLeft.axisMaximum = if (maxAvg.isPresent) maxAvg.get().second.toFloat() + .25F else 5.25F
                 axisLeft.axisMaximum = maxAvg.toFloat() + 0.5F

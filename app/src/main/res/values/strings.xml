@@ -25,7 +25,8 @@
     <string name="sorry_no_app_to_attend_this_request">There is no application installed in this device to handle this request.</string>
     <string name="sorry_could_not_insert_talk">Could not insert talk ${talk.id} ${error.message}</string>
     <string name="sorry_no_timers_to_schedule">Sorry, there are no talks scheduled for today</string>
-    <string name="all_talks_processed">All talks have been processed succesfully</string>
+
+    <string name="all_talks_processed">All talks have been processed successfully</string>
     <string name="success_data_updated">All data updated successfully.</string>
     <string name="wrong_credentials">Wrong credentials, try again.</string>
     <string name="blank_credentials">Credentials can not be empty, try again.</string>
@@ -91,7 +92,6 @@
     <string name="sorry_no_talks">Sorry, no talks to display</string>
     <string name="showing_n_talks">talks in display</string>
 
-
     <!-- AreYouSureDialgoFragment  -->
 
     <string name="are_you_sure">Do you really want to quit?</string>
@@ -107,6 +107,7 @@
     <string name="cardview_item_info">scheduleId</string>
 
     <!-- Lateral Menu -->
+
     <string name="menu_statistics">Statistics</string>
 
     <string name="menu_settings">Settings</string>
@@ -120,7 +121,6 @@
     <string name="loading">Loading. Please wait...</string>
     <string name="processing">Processing. Please wait...</string>
 
-
     <string name="about_us_title">About Us</string>
     <string name="about_us_authors">#cristiasensiom &amp; #pepmenval</string>
     <string name="about_us_positive_button">Accept</string>
@@ -129,7 +129,6 @@
     <string name="alert_message">Finish voting?</string>
     <string name="alert_positive_button">Accept</string>
     <string name="alert_negative_button">Cancel</string>
-
 
     <!-- Schedule Fragment   -->
 
@@ -146,6 +145,15 @@
     <string name="pref_email_key">email_key</string>
     <string name="pref_offset_delay_key">offset_delay_key</string>
     <string name="pref_statistics_talk_limit_key">statistics_talk_limit_key</string>
+    <string name="pref_statistics_best_talks_key">statistics_best_talks_key</string>
+    <string name="pref_statistics_best_talks_on">Top talks on display</string>
+    <string name="pref_statistics_best_talks_off">Bottom talks on display</string>
+
+    <string name="pref_mode_on">Auto Mode</string>
+    <string name="pref_mode_off">Manual Mode</string>
+
+    <string name="pref_vibrator_on">Vibrator is on</string>
+    <string name="pref_vibrator_off">Vibrator is off</string>
 
     <string name="pref_title_email">Email</string>
     <string name="menu_update">Upload Votes</string>
@@ -184,8 +192,11 @@
         <item>Cadaqués</item>
     </string-array>
 
-    <string name="pref_title_auto_mode">Auto Mode</string>
+    <string name="pref_title_auto_mode">Working Mode</string>
     <string name="pref_description_auto_mode">Voting is triggered automatically</string>
+
+    <string name="pref_title_statistics_bets_talks">Best talks</string>
+    <string name="pref_description_statistics_best_talks">If enabled best top talks are in display</string>
 
     <string name="pref_title_offset_delay">Offset delay in minutes</string>
     <string name="pref_default_offset_delay">15</string>
@@ -208,7 +219,6 @@
         <item>30</item>
     </string-array>
 
-
     <string name="pref_title_statistics_talk_limit">Talks to display in statistics</string>
     <string name="pref_default_statistics_talk_limit">10</string>
 
@@ -223,7 +233,6 @@
         <item>10</item>
         <item>15</item>
     </string-array>
-
 
     <string name="pref_title_chart_type">Chart Type</string>
     <string name="pref_default_chart_type">Vertical Bar Chart</string>
@@ -241,8 +250,5 @@
     </string-array>
 
     <!-- Strings related to Settings ends -->
-
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 </resources>

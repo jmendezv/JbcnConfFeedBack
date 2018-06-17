@@ -29,7 +29,7 @@ class AppPreferenceFragment :
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activity)
 
         var summary = if (sharedPreferences.getBoolean(PreferenceKeys.VIBRATOR_KEY, false))
-            "On" else "Off"
+            resources.getString(R.string.pref_vibrator_on) else resources.getString(R.string.pref_vibrator_off)
         var preference = findPreference(PreferenceKeys.VIBRATOR_KEY)
         preference.summary = summary
 
@@ -40,7 +40,7 @@ class AppPreferenceFragment :
         previousRoomName = summary
 
         previousAutoMode = sharedPreferences.getBoolean(PreferenceKeys.AUTO_MODE_KEY, false)
-        summary = if (previousAutoMode) "On" else "Off"
+        summary = if (previousAutoMode) resources.getString(R.string.pref_mode_on) else resources.getString(R.string.pref_mode_off)
         preference = findPreference(PreferenceKeys.AUTO_MODE_KEY)
         preference.summary = summary
 
@@ -58,6 +58,11 @@ class AppPreferenceFragment :
         summary = sharedPreferences.getString(PreferenceKeys.STATISTICS_TALK_LIMIT_KEY, resources.getString(R.string.pref_default_statistics_talk_limit))
         previousOffset = Integer.parseInt(summary)
         preference = findPreference(PreferenceKeys.STATISTICS_TALK_LIMIT_KEY)
+        preference.summary = summary
+
+        val bestTalks = sharedPreferences.getBoolean(PreferenceKeys.STATISTICS_BEST_TALKS_KEY, true)
+        summary = if (bestTalks) resources.getString(R.string.pref_statistics_best_talks_on) else resources.getString(R.string.pref_statistics_best_talks_off)
+        preference = findPreference(PreferenceKeys.STATISTICS_BEST_TALKS_KEY)
         preference.summary = summary
 
     }
@@ -115,41 +120,49 @@ class AppPreferenceFragment :
         when (key) {
             PreferenceKeys.VIBRATOR_KEY -> {
                 val vibrator = sharedPreferences!!.getBoolean(key, false)
-                val summary = if (vibrator) "On" else "Off"
+                val summary = if (vibrator) resources.getString(R.string.pref_vibrator_on) else resources.getString(R.string.pref_vibrator_off)
                 preference.summary = summary
-                sharedPreferences.edit().putBoolean(key, vibrator).commit()
+                sharedPreferences.edit().putBoolean(key, vibrator).apply()
             }
             PreferenceKeys.ROOM_KEY -> {
                 val summary = sharedPreferences!!.getString(key, resources.getString(R.string.pref_default_room_name))
                 val mode = sharedPreferences.getBoolean(PreferenceKeys.AUTO_MODE_KEY, false)
                 preference.summary = summary
-                sharedPreferences.edit().putString(key, summary).commit()
+                sharedPreferences.edit().putString(key, summary).apply()
                 // al listener se l'ha de cridar des d'onDestroy
                 //listener?.onAppPreferenceFragmentAutoModeRoomNameOffsetDelayChanged(mode)
             }
+
             PreferenceKeys.AUTO_MODE_KEY -> {
                 val mode = sharedPreferences!!.getBoolean(key, false)
-                val summary = if (mode) "On" else "Off"
+                val summary = if (mode) resources.getString(R.string.pref_mode_on) else resources.getString(R.string.pref_mode_off)
                 preference.summary = summary
-                sharedPreferences.edit().putBoolean(key, mode).commit()
+                sharedPreferences.edit().putBoolean(key, mode).apply()
             }
 
             PreferenceKeys.EMAIL_KEY -> {
                 val summary = sharedPreferences!!.getString(key, resources.getString(R.string.pref_default_email))
                 preference.summary = summary
-                sharedPreferences.edit().putString(key, summary).commit()
+                sharedPreferences.edit().putString(key, summary).apply()
             }
 
             PreferenceKeys.OFFSET_DELAY_KEY -> {
                 val summary = sharedPreferences!!.getString(key, resources.getString(R.string.pref_default_offset_delay))
                 preference.summary = summary
-                sharedPreferences.edit().putString(key, summary).commit()
+                sharedPreferences.edit().putString(key, summary).apply()
             }
 
             PreferenceKeys.STATISTICS_TALK_LIMIT_KEY -> {
                 val summary = sharedPreferences!!.getString(key, resources.getString(R.string.pref_default_statistics_talk_limit))
                 preference.summary = summary
-                sharedPreferences.edit().putString(key, summary).commit()
+                sharedPreferences.edit().putString(key, summary).apply()
+            }
+
+            PreferenceKeys.STATISTICS_BEST_TALKS_KEY -> {
+                val bestTalks = sharedPreferences!!.getBoolean(key, false)
+                val summary = if (bestTalks) resources.getString(R.string.pref_statistics_best_talks_on) else resources.getString(R.string.pref_statistics_best_talks_off)
+                preference.summary = summary
+                sharedPreferences.edit().putBoolean(key, bestTalks).apply()
             }
 
 //            PreferenceKeys.CHART_TYPE_KEY -> {

@@ -11,5 +11,6 @@ class PreferenceKeys {
         const val FILTERED_TALKS_KEY = "filtered_talks_rey"
         const val OFFSET_DELAY_KEY = "offset_delay_key"
         const val STATISTICS_TALK_LIMIT_KEY = "statistics_talk_limit_key"
+        const val STATISTICS_BEST_TALKS_KEY = "statistics_best_talks_key"
     }
 }

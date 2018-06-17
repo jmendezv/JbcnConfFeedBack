@@ -45,6 +45,12 @@
         android:title="@string/pref_title_statistics_talk_limit" />
 
     <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="@string/pref_statistics_best_talks_key"
+        android:summary="@string/pref_description_statistics_best_talks"
+        android:title="@string/pref_title_statistics_bets_talks" />
+
+    <SwitchPreferenceCompat
         android:defaultValue="false"
         android:key="@string/pref_vibrator_key"
         android:summary="@string/pref_description_vibrator"
