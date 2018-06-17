@@ -115,6 +115,7 @@ class MainActivity :
     private var scheduledFutures: MutableList<ScheduledFuture<*>?>? = null
     private lateinit var roomName: String
     private var autoMode: Boolean = false
+    private var offsetDelay: Int = 0
     private val talkSchedules = mutableMapOf<Talk, Pair<SessionTimes, String>>()
     private lateinit var sharedPreferences: SharedPreferences
     private var filteredTalks = false
@@ -168,8 +169,6 @@ class MainActivity :
             Toast.makeText(applicationContext, "${resources.getString(R.string.sorry_working_offline)}", Toast.LENGTH_SHORT).show()
         }
 
-        setupDownloadData()
-
         /*
         * This listener emulates a kind of 'home-button' in the logo from
         * the drawer.
@@ -197,9 +196,11 @@ class MainActivity :
         sharedPreferences
                 .edit()
                 .putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, false)
-                .commit()
+                .apply()
 
-        var assetsManagerFragment = AssetsManagerFragment.newInstance()
+        offsetDelay = Integer.parseInt(sharedPreferences.getString(PreferenceKeys.OFFSET_DELAY_KEY, resources.getString(R.string.pref_default_offset_delay)))
+
+        var assetsManagerFragment = AssetsManagerFragment.newInstance(offsetDelay)
 
         /*
         * Non GUI fragment manages json content: sessions and venue names
@@ -209,6 +210,28 @@ class MainActivity :
                 .add(assetsManagerFragment, ASSETS_MANAGER_FRAGMENT)
                 .commit()
 
+        //setupContentProviders()
+        setupDownloadData()
+
+    }
+
+    private fun setupContentProviders(): Unit {
+
+        var assetsManagerFragment = AssetsManagerFragment.newInstance(offsetDelay)
+
+        /*
+        * Non GUI fragment manages json content: sessions and venue names
+        * */
+        supportFragmentManager
+                .beginTransaction()
+                .add(assetsManagerFragment, ASSETS_MANAGER_FRAGMENT)
+                .commit()
+
+        assetsManagerFragment = supportFragmentManager
+                .findFragmentByTag(ASSETS_MANAGER_FRAGMENT) as AssetsManagerFragment
+
+        scheduleContentProvider = assetsManagerFragment.scheduleContentProvider!!
+        venueContentProvider = assetsManagerFragment.venueContentProvider!!
     }
 
     /*
@@ -217,11 +240,7 @@ class MainActivity :
     * */
     override fun onStart() {
         super.onStart()
-
-        val assetsManagerFragment = supportFragmentManager
-                .findFragmentByTag(ASSETS_MANAGER_FRAGMENT) as AssetsManagerFragment
-        scheduleContentProvider = assetsManagerFragment.scheduleContentProvider!!
-        venueContentProvider = assetsManagerFragment.venueContentProvider!!
+        setupContentProviders()
     }
 
     /*
@@ -331,6 +350,7 @@ class MainActivity :
      * */
     private fun setupTimer() {
 
+        //offsetDelay = Integer.parseInt(sharedPreferences.getString(PreferenceKeys.OFFSET_DELAY_KEY, resources.getString(R.string.pref_default_offset_delay)))
         scheduledExecutorService = Executors.newScheduledThreadPool(1)
         scheduledFutures = mutableListOf()
 
@@ -1093,7 +1113,7 @@ class MainActivity :
         sharedPreferences
                 .edit()
                 .putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, filtered)
-                .commit()
+                .apply()
 
         filteredTalks = filtered
         /* I change the TAG name because otherwise it wouldn't be displayed  */
@@ -1186,12 +1206,15 @@ class MainActivity :
     * automode and/or roomName
     *
     * */
-    override fun onAppPreferenceFragmentAutoModeRoomNameChanged(autoMode: Boolean) {
+    override fun onAppPreferenceFragmentAutoModeRoomNameOffsetDelayChanged(autoMode: Boolean) {
 
         roomName = sharedPreferences.getString(PreferenceKeys.ROOM_KEY, resources.getString(R.string.pref_default_room_name))
+        offsetDelay = Integer
+                .parseInt(sharedPreferences.getString(PreferenceKeys.OFFSET_DELAY_KEY, resources.getString(R.string.pref_default_offset_delay)))
         this.autoMode = autoMode
 
         if (autoMode) {
+            setupContentProviders()
             setupDataAlreadyDownloaded()
         } else {
             cancelTimer()

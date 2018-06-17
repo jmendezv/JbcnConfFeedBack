@@ -20,6 +20,7 @@ class AppPreferenceFragment :
     private var listener: AppPreferenceFragmentListener? = null
     private lateinit var previousRoomName: String
     private var previousAutoMode: Boolean = false
+    private var previousOffset: Int = 0
 
     /**
      */
@@ -55,6 +56,7 @@ class AppPreferenceFragment :
 
         // Statistics Talk Limit
         summary = sharedPreferences.getString(PreferenceKeys.STATISTICS_TALK_LIMIT_KEY, resources.getString(R.string.pref_default_statistics_talk_limit))
+        previousOffset = Integer.parseInt(summary)
         preference = findPreference(PreferenceKeys.STATISTICS_TALK_LIMIT_KEY)
         preference.summary = summary
 
@@ -86,8 +88,9 @@ class AppPreferenceFragment :
     override fun onDestroy() {
         super.onDestroy()
         if (sharedPreferences.getString(PreferenceKeys.ROOM_KEY, resources.getString(R.string.pref_default_room_name)) != previousRoomName
-                || sharedPreferences.getBoolean(PreferenceKeys.AUTO_MODE_KEY, false) != previousAutoMode) {
-            listener?.onAppPreferenceFragmentAutoModeRoomNameChanged(sharedPreferences.getBoolean(PreferenceKeys.AUTO_MODE_KEY, false))
+                || sharedPreferences.getBoolean(PreferenceKeys.AUTO_MODE_KEY, false) != previousAutoMode
+                || Integer.parseInt(sharedPreferences.getString(PreferenceKeys.OFFSET_DELAY_KEY, resources.getString(R.string.pref_default_offset_delay))) != previousOffset) {
+            listener?.onAppPreferenceFragmentAutoModeRoomNameOffsetDelayChanged(sharedPreferences.getBoolean(PreferenceKeys.AUTO_MODE_KEY, false))
         }
     }
 
@@ -98,7 +101,7 @@ class AppPreferenceFragment :
 
 
     interface AppPreferenceFragmentListener {
-        fun onAppPreferenceFragmentAutoModeRoomNameChanged(autoMode: Boolean)
+        fun onAppPreferenceFragmentAutoModeRoomNameOffsetDelayChanged(autoMode: Boolean)
     }
 
     /**
@@ -122,7 +125,7 @@ class AppPreferenceFragment :
                 preference.summary = summary
                 sharedPreferences.edit().putString(key, summary).commit()
                 // al listener se l'ha de cridar des d'onDestroy
-                //listener?.onAppPreferenceFragmentAutoModeRoomNameChanged(mode)
+                //listener?.onAppPreferenceFragmentAutoModeRoomNameOffsetDelayChanged(mode)
             }
             PreferenceKeys.AUTO_MODE_KEY -> {
                 val mode = sharedPreferences!!.getBoolean(key, false)

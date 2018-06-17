@@ -74,8 +74,8 @@
 
     <!-- AboutUsDialogFragment  -->
 
-    <string name="line_one">nacho@barcelonajug.org &amp; jonathan@barcelonajug.org</string>
-    <string name="line_two">cristina.asensio.munoz@gmail.com &amp; jmendez1@xtec.cat</string>
+    <string name="line_one">Pep Méndez is a senior Software Engineer, Java SUN Certified </string>
+    <string name="line_two">jmendez1@xtec.cat</string>
     <string name="ok">OK</string>
 
     <!-- StatisticsFragment  -->

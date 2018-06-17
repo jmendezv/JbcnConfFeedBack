@@ -20,47 +20,82 @@
         android:layout_height="1dp"
         android:background="?android:attr/listDivider" />
 
-
-    <TextView
-        android:id="@+id/tv_description"
+    <ScrollView
+        android:id="@+id/scroll_view_description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingLeft="@dimen/text_margin"
-        android:paddingRight="@dimen/text_margin"
-        android:paddingTop="@dimen/two"
-        android:paddingBottom="@dimen/two"
-        android:text="n/a"
-        android:textSize="@dimen/text_big" />
+        android:fillViewport="true"
+        android:scrollbars="vertical">
 
-    <TextView
-        android:id="@+id/tv_biography"
+        <TextView
+            android:id="@+id/tv_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="@dimen/two"
+            android:paddingLeft="@dimen/text_margin"
+            android:paddingRight="@dimen/text_margin"
+            android:paddingTop="@dimen/two"
+            android:text=""
+            android:textSize="@dimen/text_big" />
+
+    </ScrollView>
+
+    <ScrollView
+        android:id="@+id/scroll_view_biography"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingLeft="@dimen/text_margin"
-        android:paddingRight="@dimen/text_margin"
-        android:paddingBottom="@dimen/two"
-        android:text="n/a"
-        android:textSize="@dimen/text_big" />
+        android:fillViewport="true"
+        android:scrollbars="vertical">
 
-    <TextView
-        android:id="@+id/tv_twitter"
+        <TextView
+            android:id="@+id/tv_biography"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="@dimen/two"
+            android:paddingLeft="@dimen/text_margin"
+            android:paddingRight="@dimen/text_margin"
+            android:text=""
+            android:textSize="@dimen/text_big" />
+
+    </ScrollView>
+
+    <ScrollView
+        android:id="@+id/scroll_view_twitter"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingLeft="@dimen/text_margin"
-        android:paddingRight="@dimen/text_margin"
-        android:paddingBottom="@dimen/two"
-        android:text="n/a"
-        android:textSize="@dimen/text_big" />
+        android:fillViewport="true"
+        android:scrollbars="vertical">
 
-    <TextView
-        android:id="@+id/tv_homepage"
+        <TextView
+            android:id="@+id/tv_twitter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="@dimen/two"
+            android:paddingLeft="@dimen/text_margin"
+            android:paddingRight="@dimen/text_margin"
+            android:text=""
+            android:textSize="@dimen/text_big" />
+
+    </ScrollView>
+
+    <ScrollView
+        android:id="@+id/scroll_view_homepage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingLeft="@dimen/text_margin"
-        android:paddingRight="@dimen/text_margin"
-        android:paddingBottom="@dimen/two"
-        android:text="n/a"
-        android:textSize="@dimen/text_big" />
+        android:fillViewport="true"
+        android:scrollbars="vertical">
+
+        <TextView
+            android:id="@+id/tv_homepage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="@dimen/two"
+            android:paddingLeft="@dimen/text_margin"
+            android:paddingRight="@dimen/text_margin"
+            android:text=""
+            android:textSize="@dimen/text_big" />
+
+    </ScrollView>
 
 
 </LinearLayout>

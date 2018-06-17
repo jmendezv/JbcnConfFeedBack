@@ -26,6 +26,7 @@
         android:title="@string/pref_title_room_name" / -->
 
     <ListPreference
+        android:dependency="@string/pref_auto_mode_key"
         android:defaultValue="@string/pref_default_offset_delay"
         android:entries="@array/pref_offset_delay_titles"
         android:entryValues="@array/pref_offset_delay_values"

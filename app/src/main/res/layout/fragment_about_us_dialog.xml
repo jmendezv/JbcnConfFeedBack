@@ -19,8 +19,8 @@
         android:layout_height="1dp"
         android:background="?android:attr/listDivider" />
 
-    <!-- TextView
-        android:id="@+id/about_cris"
+    <TextView
+        android:id="@+id/line_one"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -29,10 +29,10 @@
         android:layout_marginBottom="16dp"
         android:fontFamily="sans-serif"
         android:textSize="@dimen/sixteen"
-        android:text="@string/line_one" / -->
+        android:text="@string/line_one" />
 
     <TextView
-        android:id="@+id/about_pep"
+        android:id="@+id/line_two"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"

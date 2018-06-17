@@ -15,7 +15,7 @@ import cat.cristina.pep.jbcnconffeedback.utils.VenueContentProvider
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
+private const val ARG_OFFSET_DELAY = "offset_delay"
 private const val ARG_PARAM2 = "param2"
 
 /**
@@ -29,7 +29,7 @@ private const val ARG_PARAM2 = "param2"
  */
 class AssetsManagerFragment : Fragment() {
     // TODO: Rename and change types of parameters
-    private var param1: String? = null
+    private var offsetDelay: Int = 0
     private var param2: String? = null
     private var listener: AssetsManagerFragmentListener? = null
 
@@ -42,7 +42,7 @@ class AssetsManagerFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
+            offsetDelay = it.getInt(ARG_OFFSET_DELAY)
             param2 = it.getString(ARG_PARAM2)
         }
         retainInstance = true
@@ -82,12 +82,6 @@ class AssetsManagerFragment : Fragment() {
     }
 
     private fun setup(): Unit {
-
-        val offsetDelay= Integer
-                .parseInt(PreferenceManager
-                        .getDefaultSharedPreferences(context)
-                        .getString(PreferenceKeys.OFFSET_DELAY_KEY, resources.getString(R.string.pref_default_offset_delay)))
-
         scheduleContentProvider = ScheduleContentProvider(context!!, MainActivity.JBCNCONF_JSON_SCHEDULES_FILE_NAME, offsetDelay)
         venueContentProvider = VenueContentProvider(context!!, MainActivity.JBCNCONF_JSON_VENUES_FILE_NAME)
     }
@@ -112,15 +106,15 @@ class AssetsManagerFragment : Fragment() {
          * Use this factory method to create a new instance of
          * this fragment using the provided parameters.
          *
-         * @param param1 Parameter 1.
+         * @param offsetDelay Parameter 1.
          * @param param2 Parameter 2.
          * @return A new instance of fragment AssetsManagerFragment.
          */
         @JvmStatic
-        fun newInstance(param1: String = "not", param2: String = "used") =
+        fun newInstance(offsetDelay: Int = 15, param2: String = "used") =
                 AssetsManagerFragment().apply {
                     arguments = Bundle().apply {
-                        putString(ARG_PARAM1, param1)
+                        putInt(ARG_OFFSET_DELAY, offsetDelay)
                         putString(ARG_PARAM2, param2)
                     }
                 }
