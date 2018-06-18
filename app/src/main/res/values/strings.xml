@@ -85,6 +85,15 @@
     <string name="email_message">Please, double click the CSV file to download. Tested with LibreOffice.</string>
     <string name="chart_description">JBCNConf 2018.</string>
 
+    <!-- Pie Chart -->
+
+    <string name="pie_chart_dialog_center">JBCNConf</string>
+    <string name="pie_chart_dialog_score_5">Awesome</string>
+    <string name="pie_chart_dialog_score_4">Extraordinary</string>
+    <string name="pie_chart_dialog_score_3">Brilliant</string>
+    <string name="pie_chart_dialog_score_2">Good</string>
+    <string name="pie_chart_dialog_score_1">OK</string>
+
     <!-- ChooseFragment -->
 
     <string name="filter_apply">FILTER</string>

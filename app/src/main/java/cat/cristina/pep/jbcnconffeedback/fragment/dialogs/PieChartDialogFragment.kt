@@ -3,14 +3,11 @@ package cat.cristina.pep.jbcnconffeedback.fragment.dialogs
 import android.app.Dialog
 import android.app.ProgressDialog
 import android.content.Context
-import android.graphics.Color
 import android.os.Bundle
 import android.support.v4.app.DialogFragment
 import android.support.v4.app.Fragment
 import android.support.v7.app.AlertDialog
 import android.util.Log
-import android.view.View
-
 import cat.cristina.pep.jbcnconffeedback.R
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
 import cat.cristina.pep.jbcnconffeedback.model.DatabaseHelper
@@ -18,9 +15,14 @@ import cat.cristina.pep.jbcnconffeedback.model.UtilDAOImpl
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.Description
 import com.github.mikephil.charting.components.Legend
+import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
+import com.github.mikephil.charting.formatter.PercentFormatter
+import com.github.mikephil.charting.highlight.Highlight
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener
+import com.github.mikephil.charting.utils.ColorTemplate
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.j256.ormlite.android.apptools.OpenHelperManager
@@ -79,7 +81,7 @@ class PieChartDialogFragment : DialogFragment() {
                 }.create()
 
 
-        pieChart = view.findViewById<PieChart>(R.id.pie_chart_id)
+        pieChart = view.findViewById(R.id.pie_chart_id) as PieChart
 
         dialog.window.setBackgroundDrawableResource(android.R.drawable.dialog_holo_light_frame)
 
@@ -120,24 +122,43 @@ class PieChartDialogFragment : DialogFragment() {
 
     }
 
+    private fun shortenTitleTo(title: String, maxLength: Int = 65): String =
+            if (title.length > maxLength) "${title.substring(0, maxLength)}...     "
+            else "$title     "
+
     private fun setupPieChart() {
 
         try {
+            val talk = utilDAOImpl.lookupTalkByGivenId(givenTalkId.toInt())
             val description = Description()
             with(description) {
-                text = "A title"
+                text = shortenTitleTo(talk.title, 35)
+//                textAlign = android.graphics.Paint.Align.CENTER
+//                setPosition(10.0F, 10.0F)
+                textSize = 12.0F
             }
+
             pieChart.description = description
+//            pieChart.centerText = resources.getString(R.string.pie_chart_dialog_center)
+            pieChart.centerText = talk.scheduleId
             pieChart.isRotationEnabled = true
-            //pieChart.setUsePercentValues(true)
-            //pieChart.setHoleColor(Color.BLUE)
-            //pieChart.setCenterTextColor(Color.BLACK
-            pieChart.holeRadius = 25f
+            pieChart.setUsePercentValues(true)
+
+//            var legend = pieChart.legend
+//            legend.position = Legend.LegendPosition.ABOVE_CHART_CENTER
+//            legend.xEntrySpace = 7.0F
+//            legend.yEntrySpace = 7.0F
+
+            pieChart.isDrawHoleEnabled = true
+
+//            pieChart.setHoleColor(Color.BLUE)
+//            pieChart.setCenterTextColor(Color.BLACK)
+//            pieChart.holeRadius = 7.0F
             pieChart.setTransparentCircleAlpha(0)
-            pieChart.centerText = "Super Cool Chart"
-            pieChart.setCenterTextSize(10.0F)
-            //pieChart.setDrawEntryLabels(true);
-            //pieChart.setEntryLabelTextSize(20);
+//            pieChart.centerText = "Super Cool Chart"
+//            pieChart.setCenterTextSize(10.0F)
+//            pieChart.setDrawEntryLabels(true);
+//            pieChart.setEntryLabelTextSize(20.0F);
             addDataSet()
         } catch (error: Exception) {
         } finally {
@@ -149,51 +170,87 @@ class PieChartDialogFragment : DialogFragment() {
 
     private fun addDataSet() {
 
-        Log.d(TAG, "addDataSet started")
-
         try {
 
-            val yData = floatArrayOf(25.3f, 10.6f, 66.76f, 44.32f, 46.01f)
-            val xData = arrayOf("Bad", "Better", "OK", "Good", "Great")
+            val labels = arrayOf(
+                    resources.getString(R.string.pie_chart_dialog_score_1),
+                    resources.getString(R.string.pie_chart_dialog_score_2),
+                    resources.getString(R.string.pie_chart_dialog_score_3),
+                    resources.getString(R.string.pie_chart_dialog_score_4),
+                    resources.getString(R.string.pie_chart_dialog_score_5))
 
-            val yEntrys = ArrayList<PieEntry>()
-            val xEntrys = ArrayList<String>()
+            val yData = mutableListOf<Float>()
+            val xData = mutableListOf<String>()
+
+            val mapOfScores = dataFromFirestore
+                    ?.get(givenTalkId)
+                    ?.asSequence()
+                    ?.groupBy {
+                        it.getLong(MainActivity.FIREBASE_COLLECTION_FIELD_SCORE)
+                    }
+
+            mapOfScores
+                    ?.keys
+                    ?.forEach {
+                        xData.add(labels[it?.toInt()?.minus(1)!!])
+                        yData.add(mapOfScores[it]?.size?.toFloat()!!)
+                    }
+
+            val pieEntries = ArrayList<PieEntry>()
 
             for (i in 0 until yData.size) {
-                yEntrys.add(PieEntry(yData[i], i))
+                pieEntries.add(PieEntry(yData[i], xData[i]))
             }
 
-            for (i in 1 until xData.size) {
-                xEntrys.add(xData[i])
-            }
 
             //create the data set
-            val pieDataSet = PieDataSet(yEntrys, "Scoring")
+            val pieDataSet = PieDataSet(pieEntries, null)
+            pieDataSet.form = Legend.LegendForm.CIRCLE
             pieDataSet.sliceSpace = 2f
             pieDataSet.valueTextSize = 12f
 
             //add colors to dataset
             val colors = ArrayList<Int>()
-            colors.add(Color.GRAY)
-            colors.add(Color.BLUE)
-            colors.add(Color.RED)
-            colors.add(Color.GREEN)
-            colors.add(Color.CYAN)
-            colors.add(Color.YELLOW)
-            colors.add(Color.MAGENTA)
 
-            pieDataSet.colors = colors
+            pieDataSet.colors = ColorTemplate.COLORFUL_COLORS.toMutableList()
 
             //add legend to chart
             val legend = pieChart.legend
             legend.form = Legend.LegendForm.CIRCLE
-            legend.position = Legend.LegendPosition.LEFT_OF_CHART
+            legend.verticalAlignment = Legend.LegendVerticalAlignment.TOP
+            legend.horizontalAlignment = Legend.LegendHorizontalAlignment.LEFT
 
             //create pie data object
             val pieData = PieData(pieDataSet)
+            //pieData.dataSetLabels = xEntries
             pieChart.data = pieData
+            pieChart.data.setValueFormatter(PercentFormatter())
+
+            pieChart.setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
+                /**
+                 * Called when nothing has been selected or an "un-select" has been made.
+                 */
+                override fun onNothingSelected() {
+                }
+
+                /**
+                 * Called when a value has been selected inside the chart.
+                 *
+                 * NOT WORKING. RETURNS ALWAYS THE SAME INDEX???
+                 *
+                 * @param entry The selected Entry
+                 * @param highlight The corresponding highlight object that contains information
+                 * about the highlighted position such as dataSetIndex, ...
+                 */
+                override fun onValueSelected(entry: Entry?, highlight: Highlight?) {
+                    //Toast.makeText(context, "${pieEntries[highlight?.dataSetIndex!!].label} ${pieEntries[highlight?.dataSetIndex!!].value}", Toast.LENGTH_SHORT).show()
+                }
+
+            })
+
             pieChart.invalidate()
         } catch (error: Exception) {
+            Log.d(TAG, "${error.printStackTrace(System.err)}")
         } finally {
             if (dialog.isShowing)
                 dialog.dismiss()
