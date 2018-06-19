@@ -5,8 +5,6 @@ import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.net.ConnectivityManager
-import android.net.NetworkInfo
 import android.net.Uri
 import android.os.*
 import android.support.design.widget.NavigationView
@@ -23,14 +21,12 @@ import android.view.View
 import android.widget.Toast
 import cat.cristina.pep.jbcnconffeedback.R
 import cat.cristina.pep.jbcnconffeedback.fragment.*
+import cat.cristina.pep.jbcnconffeedback.fragment.ChooseTalkFragment.Companion.newInstance
 import cat.cristina.pep.jbcnconffeedback.fragment.dialogs.*
 import cat.cristina.pep.jbcnconffeedback.fragment.nonguifragment.AssetsManagerFragment
 import cat.cristina.pep.jbcnconffeedback.fragment.provider.TalkContent
 import cat.cristina.pep.jbcnconffeedback.model.*
-import cat.cristina.pep.jbcnconffeedback.utils.PreferenceKeys
-import cat.cristina.pep.jbcnconffeedback.utils.ScheduleContentProvider
-import cat.cristina.pep.jbcnconffeedback.utils.SessionTimes
-import cat.cristina.pep.jbcnconffeedback.utils.VenueContentProvider
+import cat.cristina.pep.jbcnconffeedback.utils.*
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.Response
@@ -61,35 +57,7 @@ private const val TALKS_URL = "https://raw.githubusercontent.com/barcelonajug/jb
 
 private val TAG = MainActivity::class.java.name
 
-/*
-* The first time you run or debug your project in Android Studio,
-* the IDE automatically creates the debug keystore and certificate in
-* $HOME/.android/debug.keystore, and sets the keystore and key passwords.
-*
-* At some point I will have to sign the APK with my own certificate
-* because the debug certificate is created by the build tools and is insecure by design,
-* most app stores (including the Google Play Store) will not accept an APK signed with a
-* debug certificate for publishing..
-*
-* keytool -genkey -v -keystore android.keystore \
--keyalg RSA -keysize 2048 -validity 10000 -alias mendez
-*
-* mendez/valverde
-*
-* keytool -exportcert -list -v \
--alias androiddebugkey -keystore ~/.android/debug.keystore
-*
-* androiddebugkey/android
-*
-* Before going into production:
-*
-* - Delete all data from firebase
-*
-* - Delete password text in credential
-*
-* - Let now be the system time and not 11/06/18 90:00
-*
-* */
+/* One MainActivity and multiple Fragments/DialogFragments */
 class MainActivity :
         AppCompatActivity(),
         NavigationView.OnNavigationItemSelectedListener,
@@ -140,12 +108,6 @@ class MainActivity :
 
         nav_view.setNavigationItemSelectedListener(this)
 
-        /*
-        * int STATE_SETTLING Indicates that a drawer is in the process of settling to a final position.
-        * int STATE_DRAGGING Indicates that a drawer is currently being dragged by the user.
-        * int STATE_IDLE Indicates that any drawers are in an idle, settled state. No animation is in progress.
-        *
-        * */
         drawer_layout.addDrawerListener(object : DrawerLayout.SimpleDrawerListener() {
 
             override fun onDrawerOpened(drawerView: View) {
@@ -162,7 +124,7 @@ class MainActivity :
         databaseHelper = OpenHelperManager.getHelper(applicationContext, DatabaseHelper::class.java)
         utilDAOImpl = UtilDAOImpl(this, databaseHelper)
 
-        val (connected, reason) = isDeviceConnectedToWifiOrData()
+        val (connected, reason) = isDeviceConnectedToWifiOrData(this)
 
         if (connected) {
             requestQueue = Volley.newRequestQueue(this)
@@ -171,8 +133,7 @@ class MainActivity :
         }
 
         /*
-        * This listener emulates a kind of 'home-button' in the logo from
-        * the drawer.
+        * This listener emulates a kind of 'home-button' in the logo from the drawer.
         *
         * */
         nav_view.getHeaderView(0).setOnClickListener {
@@ -191,54 +152,23 @@ class MainActivity :
 
         }
 
-        /*
-        * By default talks are not filtered on entry
-        * */
-        sharedPreferences
-                .edit()
-                .putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, false)
-                .apply()
+        /* By default talks are not filtered on entry */
+        sharedPreferences.edit()
+                .putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, false).apply()
 
-        offsetDelay = Integer.parseInt(sharedPreferences.getString(PreferenceKeys.OFFSET_DELAY_KEY, resources.getString(R.string.pref_default_offset_delay)))
+        offsetDelay = Integer
+                .parseInt(sharedPreferences.getString(PreferenceKeys.OFFSET_DELAY_KEY, resources.getString(R.string.pref_default_offset_delay)))
 
-        var assetsManagerFragment = AssetsManagerFragment.newInstance(offsetDelay)
+        val assetsManagerFragment = AssetsManagerFragment.newInstance(offsetDelay)
 
-        /*
-        * Non GUI fragment manages json content: sessions and venue names
-        * */
-        supportFragmentManager
-                .beginTransaction()
-                .add(assetsManagerFragment, ASSETS_MANAGER_FRAGMENT)
-                .commit()
+        /* Non GUI fragment manages json content: sessions and venue names */
+        supportFragmentManager.beginTransaction()
+                .add(assetsManagerFragment, ASSETS_MANAGER_FRAGMENT).commit()
 
-        //setupContentProviders()
         setupDownloadData()
 
     }
 
-    private fun setupContentProviders(): Unit {
-
-        var assetsManagerFragment = AssetsManagerFragment.newInstance(offsetDelay)
-
-        /*
-        * Non GUI fragment manages json content: sessions and venue names
-        * */
-        supportFragmentManager
-                .beginTransaction()
-                .add(assetsManagerFragment, ASSETS_MANAGER_FRAGMENT)
-                .commit()
-
-        assetsManagerFragment = supportFragmentManager
-                .findFragmentByTag(ASSETS_MANAGER_FRAGMENT) as AssetsManagerFragment
-
-        scheduleContentProvider = assetsManagerFragment.scheduleContentProvider!!
-        venueContentProvider = assetsManagerFragment.venueContentProvider!!
-    }
-
-    /*
-    *
-    *
-    * */
     override fun onStart() {
         super.onStart()
         setupContentProviders()
@@ -253,28 +183,34 @@ class MainActivity :
         Log.d(TAG, "onDestroy()")
         super.onDestroy()
         requestQueue?.cancelAll(TAG)
-        cancelTimer()
+        cancelTimers()
     }
 
     private fun getAutoModeAndRoomName(): Pair<Boolean, String> =
             Pair(sharedPreferences.getBoolean(PreferenceKeys.AUTO_MODE_KEY, false), sharedPreferences.getString(PreferenceKeys.ROOM_KEY, resources.getString(R.string.pref_default_room_name)))
 
-    private fun shortenTitleTo(title: String, maxLength: Int = 65): String =
-            if (title.length > maxLength) "${title.substring(0, maxLength)}..."
-            else title
+    /* Content providers provide access to json files content */
+    private fun setupContentProviders(): Unit {
 
-    /*
-    * This method does two things:
-    *
-    * - Starts the chain of downloads/parseing/database persistence
-    *
-    * - Check the working mode (auto/manual) and sets the appropriate fragment. Finally,
-    *   it sets up the timers if necessary
-    *
-    * */
+        var assetsManagerFragment = AssetsManagerFragment.newInstance(offsetDelay)
+
+        /* Non GUI fragment manages json content: sessions and venue names */
+        supportFragmentManager
+                .beginTransaction()
+                .add(assetsManagerFragment, ASSETS_MANAGER_FRAGMENT)
+                .commit()
+
+        assetsManagerFragment = supportFragmentManager
+                .findFragmentByTag(ASSETS_MANAGER_FRAGMENT) as AssetsManagerFragment
+
+        scheduleContentProvider = assetsManagerFragment.scheduleContentProvider!!
+        venueContentProvider = assetsManagerFragment.venueContentProvider!!
+    }
+
+    /* This method starts the chain of commands to download and parse speaker/talks */
     private fun setupDownloadData(): Unit {
 
-        if (isDeviceConnectedToWifiOrData().first) {
+        if (isDeviceConnectedToWifiOrData(this).first) {
 
             dialog = ProgressDialog(this, ProgressDialog.THEME_HOLO_LIGHT) // this = YourActivity
             dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER)
@@ -282,6 +218,7 @@ class MainActivity :
             dialog.isIndeterminate = true
             dialog.setCanceledOnTouchOutside(false)
             dialog.show()
+
             downloadSpeakers()
         } else {
             setupDataAlreadyDownloaded()
@@ -305,13 +242,7 @@ class MainActivity :
 
             } else { // autoMode and roomName set
 
-                /*
-                * Aquesta estructura de dades associa cada talk amb un SessionTimes i un TalksLocation
-                * Es a dir, a qué hora es fa cada talk i on
-                * talkSchedules is a Map<Talk, Pair<SessionsTimes, TalksLocations>>
-                *
-                * */
-
+                /* talkSchedules is a Map<Talk, Pair<SessionsTimes, String>> */
                 talkSchedules.clear()
                 val talkDao: Dao<Talk, Int> = databaseHelper.getTalkDao()
 
@@ -330,7 +261,7 @@ class MainActivity :
 
                 }
 
-                setupTimer()
+                setupTimers()
 
             }
 
@@ -340,16 +271,8 @@ class MainActivity :
 
     }
 
-    /*
-     * Set timers according to date/time and room name, one task per pending talk.
-     *
-     * Each task will show voting fragment with talk id, talk title, and author 15 minutes
-     * before conclusion and will show welcome fragment back 15 times after conclusion.
-     *
-     * First we need to find the list of talks matching today and this room
-     *
-     * */
-    private fun setupTimer() {
+    /* Set timers according to date/time and room name, one task per pending talk */
+    private fun setupTimers() {
 
         //offsetDelay = Integer.parseInt(sharedPreferences.getString(PreferenceKeys.OFFSET_DELAY_KEY, resources.getString(R.string.pref_default_offset_delay)))
         scheduledExecutorService = Executors.newScheduledThreadPool(1)
@@ -363,7 +286,7 @@ class MainActivity :
 
         /* Which talks are candidates to schedule?  */
 
-//        talkSchedules.forEach { talk: Talk, pairOfTimesAndLocations: Pair<SessionTimes, String> ->
+        /* Talk, pairOfTimesAndLocations: Pair<SessionTimes, venue> */
         talkSchedules.forEach {
 
             val talk = it.key
@@ -408,11 +331,7 @@ class MainActivity :
         }
 
         /* Show initial screen with first talk title  */
-        val sortedOnlyTalksList =
-                talksToSchedule
-                        .keys
-                        //.stream()
-                        .sorted()
+        val sortedOnlyTalksList = talksToSchedule.keys.sorted()
 
         //.collect(Collectors.toList())
 
@@ -512,11 +431,7 @@ class MainActivity :
         scheduledExecutorService?.shutdown()
     }
 
-    /*
-    * This method downloads de JSON with all speaker. It uses an asynch call so I have
-    * chained subsequent dependent calls.
-    *
-    * */
+    /* This method downloads de JSON with all speaker */
     private fun downloadSpeakers() {
 
         val speakersRequest: JsonObjectRequest = JsonObjectRequest(Request.Method.GET, SPEAKERS_URL, null,
@@ -599,10 +514,7 @@ class MainActivity :
         requestQueue?.add(talksRequest)
     }
 
-    /*
-    * This method parses and stores talk's JSON in the local database
-    *
-    * */
+    /* This method parses and stores talk's JSON in the local database */
     private fun parseAndStoreTalks(talksJson: String) {
 
         val json = JSONObject(talksJson)
@@ -649,30 +561,8 @@ class MainActivity :
         setupDataAlreadyDownloaded()
     }
 
-    /*
-    * This method checks whether the device is connected or not
-    *
-    * */
-    fun isDeviceConnectedToWifiOrData(): Pair<Boolean, String> {
 
-        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-
-        val netInfo: NetworkInfo? = cm.activeNetworkInfo
-
-        //return netInfo != null && netInfo.isConnectedOrConnecting()
-
-        return Pair(netInfo?.isConnected ?: false, netInfo?.reason
-                ?: resources.getString(R.string.sorry_not_connected))
-    }
-
-    /*
-   * This method changes de actual fragment for another fragment unless both have the same tag
-   * name.
-   *
-   * It will also add the fragment to the back stack or not, depending on the addToStack
-   * parameter.
-   *
-   * */
+    /* This method changes de actual fragment for another unless both have the same tag name */
     private fun switchFragment(fragment: Fragment, tag: String, addToStack: Boolean): Unit {
 
         // Permitir solo un elemento en la pila
@@ -741,37 +631,26 @@ class MainActivity :
         }
     }
 
-    /* Uses format: "dd/MM/yyyy"  */
-    private fun fromDateToString() = simpleDateFormat.format(selectedDate)
-
+    /* This method closes the lateral menu if open  */
     private fun closeLateralMenu(): Unit {
         if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
             drawer_layout.closeDrawer(GravityCompat.START)
         }
     }
 
+    /* This method clear de back stack of what ever fragments there might be  */
     private fun clearBackStack() {
         while (supportFragmentManager.popBackStackImmediate());
     }
 
     private fun saveFilteredKey(isFiltered: Boolean): Unit {
 
-        sharedPreferences
-                .edit()
-                .putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, isFiltered)
-                .commit()
+        sharedPreferences.edit()
+                .putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, isFiltered).apply()
 
     }
 
-    /*
-    * This method manages the back button press events.
-    *
-    * According to StackOverflow:
-    *
-    * You can not control recent app AND home button in Android.
-    * You can’t allow user to not leave the app. It is user’s choice.
-    *
-    * */
+    /* This method manages the back button press events */
     override fun onBackPressed() {
 
         /* Close drawer is open  */
@@ -806,14 +685,13 @@ class MainActivity :
         }
     }
 
-    /*
-    * You must return true for the menu to be displayed; if you return false it will not be shown
-    * */
+    /* You must return true for the menu to be displayed; if you return false it will not be shown */
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main, menu)
         return super.onCreateOptionsMenu(menu)
     }
 
+    /* User choices  */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
 
         when (item.itemId) {
@@ -851,10 +729,7 @@ class MainActivity :
 
     }
 
-    /*
-    * This method is called every time the menus are shown
-    *
-    * */
+    /* This method is called every time the menus are shown */
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
 
         val drawerMenu = nav_view.menu
@@ -873,12 +748,7 @@ class MainActivity :
         return true
     }
 
-    /*
-    * This method handles lateral menu requests.
-    *
-    * Returns true to display the item as the selected item
-    *
-    * */
+    /* This method handles lateral menu requests */
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle navigation view item clicks here.
         when (item.itemId) {
@@ -903,7 +773,6 @@ class MainActivity :
             }
 
             R.id.action_finish -> {
-//                finishAndRemoveTask()
                 val fragment = AreYouSureDialogFragment.newInstance(resources.getString(R.string.are_you_sure))
                 fragment.show(supportFragmentManager, ARE_YOU_SURE_DIALOG_FRAGMENT)
             }
@@ -925,22 +794,13 @@ class MainActivity :
 
     /* This method sets the ChooseTalkFragment as active  */
     private fun setChooseTalkFragment(tag: String): Unit {
+
         val isFilter = sharedPreferences.getBoolean(PreferenceKeys.FILTERED_TALKS_KEY, false)
-        val fragment = ChooseTalkFragment.newInstance(1, isFilter, fromDateToString(), isLogIn)
+        val fragment = newInstance(1, isFilter, fromDateToString(selectedDate), isLogIn)
         switchFragment(fragment, tag, false)
     }
 
-
-    /*
-    * /storage/emulated/0/Android/data/cat.cristina.pep.jbcnconffeedback/files/Documents/statistics.csv
-    *
-    * Careful, there are ',' inside title field
-    *
-    * Format:
-    *
-    * scheduleId, score, date
-    *
-    * */
+    /* /storage/emulated/0/Android/data/cat.cristina.pep.jbcnconffeedback/files/Documents/statistics.csv */
     private fun createCVSFromStatistics(fileName: String): Unit {
         val file = File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName)
         val fileWriter = FileWriter(file)
@@ -955,19 +815,15 @@ class MainActivity :
 
         dataFromFirestore
                 ?.asSequence()
+                // For each key in the map
                 ?.forEach {
-                    //                    val idTalk = it.key
-//                    var title = databaseHelper.getTalkDao().queryForId(idTalk?.toInt()).title
-//                    title = title.replace(",", " ")
-//                    if (title.length > 30)
-//                        title = title.substring(0, 30) + " ..."
                     dataFromFirestore?.get(it.key)
                             ?.asSequence()
+                            // For each element in the list associated with this key
                             ?.forEach { doc: QueryDocumentSnapshot ->
                                 val scheduleId = doc.get(FIREBASE_COLLECTION_FIELD_SCHEDULE_ID) as String
                                 val score = doc.get(FIREBASE_COLLECTION_FIELD_SCORE)
                                 val date = doc.getDate(FIREBASE_COLLECTION_FIELD_DATE)
-                                //csvWriter.writeNext(arrayOf(idTalk.toString(), title, score.toString(), date.toString()))
                                 csvWriter.writeNext(arrayOf(scheduleId, score.toString(), simpleDateFormatCSV.format(date)))
                             }
                 }
@@ -976,10 +832,7 @@ class MainActivity :
         sendCSVByEmail(DEFAULT_STATISTICS_FILE_NAME)
     }
 
-    /*
-    * This method sends an email with a CSV file attached
-    *
-    * */
+    /* This method sends an email with a CSV file attached */
     private fun sendCSVByEmail(fileName: String): Unit {
 
         var emailAddress = arrayOf(sharedPreferences.getString(PreferenceKeys.EMAIL_KEY, resources.getString(R.string.pref_default_email)))
@@ -1002,13 +855,10 @@ class MainActivity :
 
     }
 
-    /*
-    * This method downloads the Scoring collection made up of documents(id_talk, score, date)
-    *
-    * */
+    /* This method downloads the Scoring collection made up of documents(id_talk, scheduleId, score, date) */
     private fun downloadScoring(): Unit {
 
-        if (!isDeviceConnectedToWifiOrData().first) {
+        if (!isDeviceConnectedToWifiOrData(this).first) {
             Toast.makeText(this, R.string.sorry_not_connected, Toast.LENGTH_SHORT).show()
             return
         }
@@ -1038,10 +888,7 @@ class MainActivity :
                 }
     }
 
-    /*
-    * This method is called from onChooseTalkFragment when a talk es selected in manual mode
-    *
-    * */
+    /* This method is called from onChooseTalkFragment when a talk es selected in manual mode */
     override fun onChooseTalkFragmentClickTalk(item: TalkContent.TalkItem?) {
 
         if (isLogIn) {
@@ -1050,10 +897,7 @@ class MainActivity :
         }
     }
 
-    /*
-    * This method is called from onChooseTalkFragment when a talk is long clicked in manual mode
-    *
-    * */
+    /* This method is called from onChooseTalkFragment when a talk is long clicked in manual mode */
     override fun onChooseTalkFragmentLongClickTalk(item: TalkContent.TalkItem?) {
         if (isLogIn) {
             //Toast.makeText(this, item?.speaker?.biography, Toast.LENGTH_LONG).show()
@@ -1065,16 +909,13 @@ class MainActivity :
         }
     }
 
-    /*
-    * This method is called from onChooseTalkListener
-    *
-    * */
+    /* This method is called from onChooseTalkListener to move to Firestore pending votes */
     override fun onChooseTalkFragmentUpdateTalks() {
 
         val scoreDao: Dao<Score, Int> = databaseHelper.getScoreDao()
 
         if (scoreDao.countOf() > 0) {
-            if (isDeviceConnectedToWifiOrData().first) {
+            if (isDeviceConnectedToWifiOrData(this).first) {
 
                 Toast.makeText(this, R.string.success_data_updated, Toast.LENGTH_SHORT).show()
                 val firestore = FirebaseFirestore.getInstance()
@@ -1105,16 +946,11 @@ class MainActivity :
         }
     }
 
-    /*
-    *
-    * This method is called from ChooseTalkFragment when there's a filter request by date and room
-    *
-    * */
+    /* This method is called from ChooseTalkFragment when there's a filter request by date and room */
     override fun onChooseTalkFragmentFilterTalks(filtered: Boolean) {
-        sharedPreferences
-                .edit()
-                .putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, filtered)
-                .apply()
+
+        sharedPreferences.edit()
+                .putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, filtered).apply()
 
         filteredTalks = filtered
         /* I change the TAG name because otherwise it wouldn't be displayed  */
@@ -1122,17 +958,7 @@ class MainActivity :
 
     }
 
-    /*
-    *
-    * Note that documents in a collections can contain different sets of information, key-value pairs
-    *
-    * Documents within the same collection can all contain different fields or store different types
-    * of data in those fields. However, it's a good idea to use the same fields and data types across
-    * multiple documents, so that you can query the documents more easily
-    *
-    * Scoring: talk_id, schedule_id, score, date
-    *
-    * */
+    /* Scoring: talk_id, schedule_id, score, date */
     override fun onVoteFragmentVote(talkId: Int, score: Int) {
 
         val scoreDao: Dao<Score, Int> = databaseHelper.getScoreDao()
@@ -1141,16 +967,14 @@ class MainActivity :
         //val scheduleId = talkDao.queryForId(talkId).scheduleId
         val scheduleId = utilDAOImpl.lookupTalkByGivenId(talkId).scheduleId
 
-        if (isDeviceConnectedToWifiOrData().first) {
-
-            val firestore = FirebaseFirestore.getInstance()
+        if (isDeviceConnectedToWifiOrData(this).first) {
 
             val scoringDoc = mapOf(FIREBASE_COLLECTION_FIELD_TALK_ID to talkId,
                     FIREBASE_COLLECTION_FIELD_SCHEDULE_ID to scheduleId,
                     FIREBASE_COLLECTION_FIELD_SCORE to score,
                     FIREBASE_COLLECTION_FIELD_DATE to java.util.Date())
 
-            firestore
+            FirebaseFirestore.getInstance()
                     .collection(FIREBASE_COLLECTION)
                     .add(scoringDoc)
                     .addOnSuccessListener {
@@ -1170,7 +994,6 @@ class MainActivity :
         }
 
         /* Some user feedback in the form of a light vibration. Oreo. Android 8.0. APIS 26-27 */
-
         if (sharedPreferences.getBoolean(PreferenceKeys.VIBRATOR_KEY, false)) {
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -1182,35 +1005,26 @@ class MainActivity :
         }
     }
 
-    /*
-    * This method cancels pending tasks
-    *
-    * */
-    private fun cancelTimer() {
-        if (scheduledFutures != null) {
-            for (scheduledFuture in scheduledFutures!!) {
-                scheduledFuture?.cancel(true)
+    /* This method cancels pending tasks */
+    private fun cancelTimers() {
+
+        scheduledFutures?.run {
+            forEach {
+                it?.cancel(true)
             }
         }
+
     }
 
 
-    /*
-    * This method computes how many votes of every possible value has this talk
-    * and shows a DialogFragment with PieChart
-    *
-    * */
+    /* This method is called from StatisticFragment when user clicks one bar */
     override fun onStatisticsFragmentInteraction(givenTalkId: Long?) {
         val fragment = PieChartDialogFragment.newInstance(givenTalkId!!)
         fragment.show(supportFragmentManager, MainActivity.PIE_CHART_DIALOG_FRAGMENT)
 
     }
 
-    /*
-    * This method is called from the preference fragment, every time there is a change in
-    * automode and/or roomName
-    *
-    * */
+    /* This method is called from the preference fragment */
     override fun onAppPreferenceFragmentAutoModeRoomNameOffsetDelayChanged(autoMode: Boolean) {
 
         roomName = sharedPreferences.getString(PreferenceKeys.ROOM_KEY, resources.getString(R.string.pref_default_room_name))
@@ -1222,23 +1036,17 @@ class MainActivity :
             setupContentProviders()
             setupDataAlreadyDownloaded()
         } else {
-            cancelTimer()
+            cancelTimers()
             setChooseTalkFragment("$CHOOSE_TALK_FRAGMENT$roomName")
         }
 
     }
 
-    /*
-    * This method might get called from WelcomeFragment eventually
-    *
-    * */
+    /* This method might get called from WelcomeFragment eventually */
     override fun onWelcomeFragmentInteraction(msg: String) {
     }
 
-    /*
-    * This method is called from the CredentialsDialogFragment to report the user interaction
-    *
-    * */
+    /* This method is called from the CredentialsDialogFragment to report the user interaction */
     override fun onCredentialsDialogFragmentInteraction(answer: Int) {
 
         when (answer) {
@@ -1262,24 +1070,17 @@ class MainActivity :
         }
     }
 
-    /*
-    *
-    * */
+    /* This method is called from AboutUsDialogFragment */
     override fun onAboutUsDialogFragmentInteraction(msg: String) {
         closeLateralMenu()
     }
 
-    /*
-    *
-    * */
+    /* This method is called from LicenseDialogFragment */
     override fun onLicenseDialogFragmentInteraction(msg: String) {
         closeLateralMenu()
     }
 
-    /*
-    * This method set de date/time to filter talks
-    *
-    * */
+    /* This method is called from DatePickerDialogFragment */
     override fun onDatePikerDialogFragmentInteraction(newDate: String) {
 
         selectedDate = simpleDateFormat.parse(newDate)
@@ -1292,6 +1093,7 @@ class MainActivity :
 
     }
 
+    /* This method is called from AreYouSureDialogFragment */
     override fun onAreYouSureDialogFragmentInteraction(resp: Int) {
 
         when (resp) {
@@ -1309,32 +1111,20 @@ class MainActivity :
         }
     }
 
-    /*
-    * This method might get called from PersonalStuffDialogFragment eventually
-    *
-    * */
+    /* This method might get called from PersonalStuffDialogFragment eventually */
     override fun onPersonalStuffDialogFragmentInteraction(msg: String) {
 
     }
 
-    /*
-    * This method might get called from PersonalStuffDialogFragment eventually
-    *
-    * */
+    /* This method might get called from PersonalStuffDialogFragment eventually */
     override fun onAssetsManagerFragmentInteraction(msg: String) {
     }
 
-    /*
-    * This method might get called from PieChartDialogFragmentInteraction eventually
-    *
-    * */
+    /* This method might get called from PieChartDialogFragmentInteraction eventually */
     override fun onPieChartDialogFragmentInteraction(msg: String) {
     }
 
-    /*
-    * Static-like Kotlin style declarations
-    *
-    * */
+    /* Static-like Kotlin style declarations */
     companion object {
 
         const val URL_SPEAKERS_IMAGES = "http://www.jbcnconf.com/2018/"

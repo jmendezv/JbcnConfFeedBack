@@ -12,6 +12,8 @@ import cat.cristina.pep.jbcnconffeedback.R
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
 import cat.cristina.pep.jbcnconffeedback.model.DatabaseHelper
 import cat.cristina.pep.jbcnconffeedback.model.UtilDAOImpl
+import cat.cristina.pep.jbcnconffeedback.utils.shortenTitleTo
+import cat.cristina.pep.jbcnconffeedback.utils.shortenTitleToWithPadding
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.Description
 import com.github.mikephil.charting.components.Legend
@@ -119,12 +121,7 @@ class PieChartDialogFragment : DialogFragment() {
                         //Log.d(TAG, "*** Error *** ${it.exception?.message}")
                     }
                 }
-
     }
-
-    private fun shortenTitleTo(title: String, maxLength: Int = 65): String =
-            if (title.length > maxLength) "${title.substring(0, maxLength)}...     "
-            else "$title     "
 
     private fun setupPieChart() {
 
@@ -132,7 +129,7 @@ class PieChartDialogFragment : DialogFragment() {
             val talk = utilDAOImpl.lookupTalkByGivenId(givenTalkId.toInt())
             val description = Description()
             with(description) {
-                text = shortenTitleTo(talk.title, 35)
+                text = shortenTitleToWithPadding(talk.title, 35)
 //                textAlign = android.graphics.Paint.Align.CENTER
 //                setPosition(10.0F, 10.0F)
                 textSize = 12.0F
