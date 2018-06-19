@@ -5,6 +5,8 @@ import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.ConnectivityManager
+import android.net.NetworkInfo
 import android.net.Uri
 import android.os.*
 import android.support.design.widget.NavigationView
@@ -124,7 +126,7 @@ class MainActivity :
         databaseHelper = OpenHelperManager.getHelper(applicationContext, DatabaseHelper::class.java)
         utilDAOImpl = UtilDAOImpl(this, databaseHelper)
 
-        val (connected, reason) = isDeviceConnectedToWifiOrData(this)
+        val (connected, reason) = isDeviceConnectedToWifiOrData()
 
         if (connected) {
             requestQueue = Volley.newRequestQueue(this)
@@ -210,7 +212,7 @@ class MainActivity :
     /* This method starts the chain of commands to download and parse speaker/talks */
     private fun setupDownloadData(): Unit {
 
-        if (isDeviceConnectedToWifiOrData(this).first) {
+        if (isDeviceConnectedToWifiOrData().first) {
 
             dialog = ProgressDialog(this, ProgressDialog.THEME_HOLO_LIGHT) // this = YourActivity
             dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER)
@@ -537,20 +539,8 @@ class MainActivity :
                 Log.e(TAG, "Could not insert talk ${talk.id} ${error.message}")
             }
 
-            /* relacionamos cada talk con su speaker/s not necessary because there are no joins */
-//            for (j in 0 until (talk.speakers!!.size)) {
-//                val speakerRef: String = talk.speakers!!.get(j)
-//                val dao: UtilDAOImpl = UtilDAOImpl(applicationContext, databaseHelper)
-//                Log.d(TAG, "Looking for ref $speakerRef")
-//                val speaker: Speaker = dao.lookupSpeakerByRef(speakerRef)
-//                val speakerTalk = SpeakerTalk(0, speaker, talk)
-//                try {
-//                    speakerTalkDao.create(speakerTalk)
-//                    Log.d(TAG, "Speaker-Talk ${speakerTalk}  from ${speaker} and  ${talk} created")
-//                } catch (e: Exception) {
-//                    Log.e(TAG, "Could not insert Speaker-Talk ${speakerTalk.id} ${e.message}")
-//                }
-//            }
+            /* 1 */
+
         }
 
         if (dialog.isShowing)
@@ -571,48 +561,7 @@ class MainActivity :
 
         val actualFragment = supportFragmentManager.findFragmentByTag(tag)
 
-        /*
-        * This will prevent state loss exception:
-        *
-        * java.lang.IllegalStateException: Can not perform this action after onSaveInstanceState
-        *
-        * A condition that arises when trying to to commit a FragmentTransaction after the
-        * activity's transaction has been saved: Activity.onSaveInstanceState(Bundle).
-        *
-        * The Android system has the power to terminate processes at any time to free up memory,
-        * and background activities may be killed with little to no warning as a result.
-        *
-        * To ensure that this sometimes erratic behavior remains hidden from the user,
-        * the framework gives each Activity a chance to save its state by calling its
-        * onSaveInstanceState() method before making the Activity vulnerable to destruction.
-        *
-        * When the saved state is later restored, the user will be given the perception that
-        * they are seamlessly switching between foreground and background activities,
-        * regardless of whether or not the Activity had been killed by the system.
-        *
-        * When the framework calls onSaveInstanceState(), it passes the method a Bundle object
-        * for the Activity to use to save its state, and the Activity records in it the state
-        * of its dialogs, fragments, and views.
-        *
-        * When the method returns, the system parcels the Bundle object across a Binder interface
-        * to the System Server process, where it is safely stored away.
-        *
-        * When the system later decides to recreate the Activity, it sends this same Bundle object
-        * back to the application, for it to use to restore the Activity’s old state.
-        *
-        * The problem stems from the fact that these Bundle objects represent a snapshot of an
-        * Activity at the moment onSaveInstanceState() was called, and nothing more.
-        *
-        * That means when you call FragmentTransaction#commit() after onSaveInstanceState()
-        * is called, the transaction won’t be remembered because it was never recorded as part of
-        * the Activity’s state in the first place.
-        *
-        * In order to protect the user experience, Android avoids state loss at all costs,
-        * and simply throws an IllegalStateException whenever it occurs.
-        *
-        * https://www.androiddesignpatterns.com/2013/08/fragment-transaction-commit-state-loss.html
-        *
-        * */
+
         if (!isFinishing) {
 
             actualFragment?.tag.run {
@@ -858,7 +807,7 @@ class MainActivity :
     /* This method downloads the Scoring collection made up of documents(id_talk, scheduleId, score, date) */
     private fun downloadScoring(): Unit {
 
-        if (!isDeviceConnectedToWifiOrData(this).first) {
+        if (!isDeviceConnectedToWifiOrData().first) {
             Toast.makeText(this, R.string.sorry_not_connected, Toast.LENGTH_SHORT).show()
             return
         }
@@ -888,6 +837,23 @@ class MainActivity :
                 }
     }
 
+    /* This method checks whether the device is connected or not */
+    fun isDeviceConnectedToWifiOrData(): Pair<Boolean, String> {
+
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+        val netInfo: NetworkInfo? = cm.activeNetworkInfo
+
+        //return netInfo != null && netInfo.isConnectedOrConnecting()
+
+        return Pair(netInfo?.isConnected ?: false, netInfo?.reason
+                ?: resources.getString(R.string.sorry_not_connected))
+    }
+
+    /* Uses format: "dd/MM/yyyy"  */
+    fun fromDateToString(selectedDate: Date) = MainActivity.simpleDateFormat.format(selectedDate)
+
+
     /* This method is called from onChooseTalkFragment when a talk es selected in manual mode */
     override fun onChooseTalkFragmentClickTalk(item: TalkContent.TalkItem?) {
 
@@ -915,7 +881,7 @@ class MainActivity :
         val scoreDao: Dao<Score, Int> = databaseHelper.getScoreDao()
 
         if (scoreDao.countOf() > 0) {
-            if (isDeviceConnectedToWifiOrData(this).first) {
+            if (isDeviceConnectedToWifiOrData().first) {
 
                 Toast.makeText(this, R.string.success_data_updated, Toast.LENGTH_SHORT).show()
                 val firestore = FirebaseFirestore.getInstance()
@@ -967,7 +933,7 @@ class MainActivity :
         //val scheduleId = talkDao.queryForId(talkId).scheduleId
         val scheduleId = utilDAOImpl.lookupTalkByGivenId(talkId).scheduleId
 
-        if (isDeviceConnectedToWifiOrData(this).first) {
+        if (isDeviceConnectedToWifiOrData().first) {
 
             val scoringDoc = mapOf(FIREBASE_COLLECTION_FIELD_TALK_ID to talkId,
                     FIREBASE_COLLECTION_FIELD_SCHEDULE_ID to scheduleId,
@@ -1015,7 +981,6 @@ class MainActivity :
         }
 
     }
-
 
     /* This method is called from StatisticFragment when user clicks one bar */
     override fun onStatisticsFragmentInteraction(givenTalkId: Long?) {

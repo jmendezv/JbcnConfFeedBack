@@ -12,8 +12,6 @@ import cat.cristina.pep.jbcnconffeedback.R
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
 import cat.cristina.pep.jbcnconffeedback.model.DatabaseHelper
 import cat.cristina.pep.jbcnconffeedback.model.UtilDAOImpl
-import cat.cristina.pep.jbcnconffeedback.utils.shortenTitleTo
-import cat.cristina.pep.jbcnconffeedback.utils.shortenTitleToWithPadding
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.Description
 import com.github.mikephil.charting.components.Legend
@@ -95,6 +93,10 @@ class PieChartDialogFragment : DialogFragment() {
         super.onStart()
         downloadFirebaseData()
     }
+
+    private fun shortenTitleToWithPadding(title: String, maxLength: Int = 65): String =
+            if (title.length > maxLength) "${title.substring(0, maxLength)}...     "
+            else "$title     "
 
     private fun downloadFirebaseData() {
 
