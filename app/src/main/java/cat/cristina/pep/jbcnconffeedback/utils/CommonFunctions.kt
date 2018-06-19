@@ -122,6 +122,7 @@ internal fun getSessionId(scheduleId: String): String =
 internal fun getVenueId(scheduleId: String): String =
         "${scheduleId.substring(1, 4)}-${scheduleId.substring(5, 8)}"
 
+/* Shorthens Pep Mendez to P. Mendez  */
 internal fun shortenName(authorName: String): String =
         try {
             authorName.substring(0, 1) + "." + authorName.substring(authorName.indexOf(" "))

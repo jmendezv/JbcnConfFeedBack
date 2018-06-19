@@ -9,12 +9,12 @@ import android.support.v4.app.Fragment
 import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.widget.ProgressBar
+import android.widget.Toast
 import cat.cristina.pep.jbcnconffeedback.R
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
 import cat.cristina.pep.jbcnconffeedback.model.DatabaseHelper
 import cat.cristina.pep.jbcnconffeedback.model.UtilDAOImpl
 import cat.cristina.pep.jbcnconffeedback.utils.shortenName
-import cat.cristina.pep.jbcnconffeedback.utils.shortenTitleTo
 import cat.cristina.pep.jbcnconffeedback.utils.shortenTitleToWithPadding
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.Description
@@ -30,7 +30,6 @@ import com.github.mikephil.charting.utils.ColorTemplate
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.j256.ormlite.android.apptools.OpenHelperManager
-import kotlinx.android.synthetic.main.fragment_statistics.*
 
 
 private val TAG = PieChartDialogFragment::class.java.name
@@ -107,18 +106,21 @@ class PieChartDialogFragment : DialogFragment() {
         FirebaseFirestore.getInstance()
                 .collection(MainActivity.FIREBASE_COLLECTION)
                 .get()
-                .addOnCompleteListener {
-                    /* isVisible() means added, attached and not hidden  */
-                    if (!isDismissed)
-                        if (it.isSuccessful) {
-                            dataFromFirestore = it.result.groupBy {
-                                it.getLong(MainActivity.FIREBASE_COLLECTION_FIELD_TALK_ID)
-                            }
-                            setupPieChart()
-                        } else {
-                            progressBar?.visibility = ProgressBar.GONE
+                .addOnSuccessListener {
+                    if (!isDismissed) {
+                        dataFromFirestore = it.groupBy {
+                            it.getLong(MainActivity.FIREBASE_COLLECTION_FIELD_TALK_ID)
                         }
+                        setupPieChart()
+                    }
                 }
+                .addOnFailureListener {
+                    if (!isDismissed) {
+                        progressBar?.visibility = ProgressBar.GONE
+                        Toast.makeText(context, R.string.sorry_no_graphic_available, Toast.LENGTH_LONG).show()
+                    }
+                }
+
     }
 
     private fun setupPieChart() {

@@ -112,22 +112,23 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
         FirebaseFirestore.getInstance()
                 .collection(MainActivity.FIREBASE_COLLECTION)
                 .get()
-                .addOnCompleteListener {
-                    /* added(), attached and not hidden  */
-                    if (isVisible)
-                        if (it.isSuccessful) {
-                            dataFromFirestore = it.result.groupBy {
-                                it.getLong(MainActivity.FIREBASE_COLLECTION_FIELD_TALK_ID)
-                            }
-                            val numTalks = Integer
-                                    .parseInt(sharedPreferences!!.getString(PreferenceKeys.STATISTICS_TALK_LIMIT_KEY, resources.getString(R.string.pref_default_statistics_talk_limit)))
-                            setupGraphTopNTalks(numTalks)
-                        } else {
-                            progressBar.visibility = ProgressBar.GONE
-                            Toast.makeText(context, R.string.sorry_no_graphic_available, Toast.LENGTH_LONG).show()
-                            //Log.d(TAG, "*** Error *** ${it.exception?.message}")
+                .addOnSuccessListener {
+                    if (isVisible ) {
+                        dataFromFirestore = it.groupBy {
+                            it.getLong(MainActivity.FIREBASE_COLLECTION_FIELD_TALK_ID)
                         }
+                        val numTalks = Integer
+                                .parseInt(sharedPreferences!!.getString(PreferenceKeys.STATISTICS_TALK_LIMIT_KEY, resources.getString(R.string.pref_default_statistics_talk_limit)))
+                        setupGraphTopNTalks(numTalks)
+                    }
                 }
+                .addOnFailureListener {
+                    if (isVisible) {
+                        progressBar.visibility = ProgressBar.GONE
+                        Toast.makeText(context, R.string.sorry_no_graphic_available, Toast.LENGTH_LONG).show()
+                    }
+                }
+
     }
 
     private fun isLargeDevice(): Boolean =
