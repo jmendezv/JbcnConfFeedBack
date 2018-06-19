@@ -1,7 +1,6 @@
 package cat.cristina.pep.jbcnconffeedback.activity
 
 import android.app.Dialog
-import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -81,7 +80,8 @@ class MainActivity :
     private lateinit var utilDAOImpl: UtilDAOImpl
     private var requestQueue: RequestQueue? = null
     private lateinit var vibrator: Vibrator
-    private lateinit var dialog: ProgressDialog
+    //private lateinit var dialog: ProgressDialog
+    private lateinit var customDialog: CustomDialog
     private var scheduledExecutorService: ScheduledExecutorService? = null
     private var scheduledFutures: MutableList<ScheduledFuture<*>?>? = null
     private lateinit var roomName: String
@@ -151,6 +151,8 @@ class MainActivity :
 
         }
 
+        customDialog = CustomDialog(this, R.drawable.spinner)
+
         /* By default talks are not filtered on entry */
         sharedPreferences.edit()
                 .putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, false).apply()
@@ -206,14 +208,7 @@ class MainActivity :
     private fun setupDownloadData(): Unit {
 
         if (isDeviceConnectedToWifiOrData().first) {
-
-            dialog = ProgressDialog(this, ProgressDialog.THEME_HOLO_LIGHT) // this = YourActivity
-            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER)
-            dialog.setMessage(resources.getString(R.string.loading))
-            dialog.isIndeterminate = true
-            dialog.setCanceledOnTouchOutside(false)
-            dialog.show()
-
+            customDialog.show()
             downloadSpeakers()
         } else {
             setupWorkingMode()
@@ -430,8 +425,10 @@ class MainActivity :
                 },
 
                 Response.ErrorListener { error ->
-                    if (dialog.isShowing)
-                        dialog.dismiss()
+                    if (customDialog.isShowing)
+                        customDialog.dismiss()
+//                    if (dialog.isShowing)
+//                        dialog.dismiss()
                     Toast.makeText(this, error.message, Toast.LENGTH_SHORT).show()
                     //Log.e(TAG, error.message)
                 })
@@ -463,8 +460,8 @@ class MainActivity :
             } catch (error: Exception) {
                 /* duplicated generally  */
                 Log.e(TAG, "Could not insert speaker $speaker ${error.message}")
-                if (dialog.isShowing)
-                    dialog.dismiss()
+                if (customDialog.isShowing)
+                    customDialog.dismiss()
             }
         }
     }
@@ -482,8 +479,8 @@ class MainActivity :
                 Response.ErrorListener { error ->
                     // Log.e(TAG, error.message)
 
-                    if (dialog.isShowing)
-                        dialog.dismiss()
+                    if (customDialog.isShowing)
+                        customDialog.dismiss()
 
                     Toast.makeText(this, error.message, Toast.LENGTH_SHORT).show()
 
@@ -512,8 +509,8 @@ class MainActivity :
                 talkDao.create(talk)
                 Log.e(TAG, "talk ${talk.id} created")
             } catch (error: Exception) {
-                if (dialog.isShowing)
-                    dialog.dismiss()
+                if (customDialog.isShowing)
+                    customDialog.dismiss()
                 Log.e(TAG, "Could not insert talk ${talk.id} ${error.message}")
             }
 
@@ -521,8 +518,8 @@ class MainActivity :
 
         }
 
-        if (dialog.isShowing)
-            dialog.dismiss()
+        if (customDialog.isShowing)
+            customDialog.dismiss()
 
         //* setup de la parte sin conexión: en funcio de autoMode/roomName set or not  */
 
@@ -730,34 +727,45 @@ class MainActivity :
 
     /* /storage/emulated/0/Android/data/cat.cristina.pep.jbcnconffeedback/files/Documents/statistics.csv */
     private fun createCVSFromStatistics(fileName: String): Unit {
-        val file = File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName)
-        val fileWriter = FileWriter(file)
 
-        val csvWriter = CSVWriter(fileWriter,
-                CSVWriter.DEFAULT_SEPARATOR,
-                CSVWriter.NO_QUOTE_CHARACTER,
-                CSVWriter.DEFAULT_ESCAPE_CHARACTER,
-                CSVWriter.DEFAULT_LINE_END)
+        var csvWriter: CSVWriter? = null
 
-        csvWriter.writeNext(arrayOf(FIREBASE_COLLECTION_FIELD_SCHEDULE_ID, FIREBASE_COLLECTION_FIELD_SCORE, FIREBASE_COLLECTION_FIELD_DATE))
+        try {
+            val file = File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName)
+            val fileWriter = FileWriter(file)
 
-        dataFromFirestore
-                ?.asSequence()
-                // For each key in the map
-                ?.forEach {
-                    dataFromFirestore?.get(it.key)
-                            ?.asSequence()
-                            // For each element in the list associated with this key
-                            ?.forEach { doc: QueryDocumentSnapshot ->
-                                val scheduleId = doc.get(FIREBASE_COLLECTION_FIELD_SCHEDULE_ID) as String
-                                val score = doc.get(FIREBASE_COLLECTION_FIELD_SCORE)
-                                val date = doc.getDate(FIREBASE_COLLECTION_FIELD_DATE)
-                                csvWriter.writeNext(arrayOf(scheduleId, score.toString(), simpleDateFormatCSV.format(date)))
-                            }
-                }
+            csvWriter = CSVWriter(fileWriter,
+                    CSVWriter.DEFAULT_SEPARATOR,
+                    CSVWriter.NO_QUOTE_CHARACTER,
+                    CSVWriter.DEFAULT_ESCAPE_CHARACTER,
+                    CSVWriter.DEFAULT_LINE_END)
 
-        csvWriter.close()
-        sendCSVByEmail(DEFAULT_STATISTICS_FILE_NAME)
+            csvWriter.writeNext(arrayOf(FIREBASE_COLLECTION_FIELD_SCHEDULE_ID, FIREBASE_COLLECTION_FIELD_SCORE, FIREBASE_COLLECTION_FIELD_DATE))
+
+            dataFromFirestore
+                    ?.asSequence()
+                    // For each key in the map
+                    ?.forEach {
+                        dataFromFirestore?.get(it.key)
+                                ?.asSequence()
+                                // For each element in the list associated with this key
+                                ?.forEach { doc: QueryDocumentSnapshot ->
+                                    val scheduleId = doc.get(FIREBASE_COLLECTION_FIELD_SCHEDULE_ID) as String
+                                    val score = doc.get(FIREBASE_COLLECTION_FIELD_SCORE)
+                                    val date = doc.getDate(FIREBASE_COLLECTION_FIELD_DATE)
+                                    csvWriter.writeNext(arrayOf(scheduleId, score.toString(), simpleDateFormatCSV.format(date)))
+                                }
+                    }
+
+
+            sendCSVByEmail(DEFAULT_STATISTICS_FILE_NAME)
+
+
+        } catch (error: Exception) {
+
+        } finally {
+            csvWriter?.close()
+        }
     }
 
     /* This method sends an email with a CSV file attached */
@@ -791,29 +799,27 @@ class MainActivity :
             return
         }
 
-        dialog = ProgressDialog(this, ProgressDialog.THEME_HOLO_LIGHT)
-        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER)
-        dialog.setMessage(resources.getString(R.string.loading))
-        dialog.isIndeterminate = true
-        dialog.setCanceledOnTouchOutside(false)
-        dialog.show()
+        customDialog.show()
 
         FirebaseFirestore.getInstance()
                 .collection(FIREBASE_COLLECTION)
                 .get()
-                .addOnCompleteListener {
-
-                    if (it.isSuccessful) {
-                        dataFromFirestore = it.result.groupBy {
-                            it.getLong(FIREBASE_COLLECTION_FIELD_TALK_ID)
-                        }
-                        dialog.dismiss()
+                .addOnSuccessListener {
+                    dataFromFirestore = it.groupBy {
+                        it.getLong(FIREBASE_COLLECTION_FIELD_TALK_ID)
+                    }
+                    if (customDialog.isShowing) {
+                        customDialog.dismiss()
                         createCVSFromStatistics(DEFAULT_STATISTICS_FILE_NAME)
-                    } else {
-                        dialog.dismiss()
-                        Toast.makeText(this, R.string.sorry_no_scoring_avaiable, Toast.LENGTH_SHORT).show()
                     }
                 }
+                .addOnFailureListener {
+                    if (customDialog.isShowing) {
+                        customDialog.dismiss()
+                        createCVSFromStatistics(DEFAULT_STATISTICS_FILE_NAME)
+                    }
+                }
+
     }
 
     /* This method checks whether the device is connected or not */
@@ -859,16 +865,18 @@ class MainActivity :
             if (isDeviceConnectedToWifiOrData().first) {
 
                 Toast.makeText(this, R.string.success_data_updated, Toast.LENGTH_SHORT).show()
-                val firestore = FirebaseFirestore.getInstance()
 
                 scoreDao.queryForAll().forEach {
+
                     val id = it.id
+
                     val scoringDoc = mapOf(
                             FIREBASE_COLLECTION_FIELD_TALK_ID to it.talk_id,
                             FIREBASE_COLLECTION_FIELD_SCHEDULE_ID to it.schedule_id,
                             FIREBASE_COLLECTION_FIELD_SCORE to it.score,
                             FIREBASE_COLLECTION_FIELD_DATE to it.date)
-                    firestore
+
+                    FirebaseFirestore.getInstance()
                             .collection(FIREBASE_COLLECTION)
                             .add(scoringDoc)
                             .addOnSuccessListener {
