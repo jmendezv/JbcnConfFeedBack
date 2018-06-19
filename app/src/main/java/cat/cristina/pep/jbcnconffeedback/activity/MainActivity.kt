@@ -247,13 +247,13 @@ class MainActivity :
                     val scheduleId = it.scheduleId
                     //                   0123456789012
                     // scheduleId format #MON-TC1-SE1
-                    val sessionId = "${scheduleId.substring(1, 4)}-${scheduleId.substring(9, 12)}"
-                    val session = scheduleContentProvider.getSessionTimes(sessionId)
+                    val sessionId = getSessionId(scheduleId)
+                    val sessionTimes = scheduleContentProvider.getSessionTimes(sessionId)
 
-                    val venueId = "${scheduleId.substring(1, 4)}-${scheduleId.substring(5, 8)}"
-                    val location = venueContentProvider.getRoom(venueId)
+                    val venueId = getVenueId(scheduleId)
+                    val roomName = venueContentProvider.getRoom(venueId)
                     // crea una mapa de Talk y Pair<SessionsTimes, TalksLocation>
-                    talkSchedules[it] = session to location
+                    talkSchedules[it] = sessionTimes to roomName
 
                 }
 

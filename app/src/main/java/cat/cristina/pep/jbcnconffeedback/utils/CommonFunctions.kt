@@ -111,5 +111,20 @@ internal fun shortenTitleToWithPadding(title: String, maxLength: Int = 65): Stri
 /* Aixo formata el temps que queda perque comenci i acabi l'event actual*/
 internal fun remainingTime(ms: Long): String =
         String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(ms),
-        TimeUnit.MILLISECONDS.toMinutes(ms) % TimeUnit.HOURS.toMinutes(1),
-        TimeUnit.MILLISECONDS.toSeconds(ms) % TimeUnit.MINUTES.toSeconds(1))
+                TimeUnit.MILLISECONDS.toMinutes(ms) % TimeUnit.HOURS.toMinutes(1),
+                TimeUnit.MILLISECONDS.toSeconds(ms) % TimeUnit.MINUTES.toSeconds(1))
+
+/* From #MON-TC1-SE1 to MON-SE1*/
+internal fun getSessionId(scheduleId: String): String =
+        "${scheduleId.substring(1, 4)}-${scheduleId.substring(9, 12)}"
+
+/* From #MON-TC1-SE1 to MON-TC1*/
+internal fun getVenueId(scheduleId: String): String =
+        "${scheduleId.substring(1, 4)}-${scheduleId.substring(5, 8)}"
+
+internal fun shortenName(authorName: String): String =
+        try {
+            authorName.substring(0, 1) + "." + authorName.substring(authorName.indexOf(" "))
+        } catch (error: Exception) {
+            authorName
+        }

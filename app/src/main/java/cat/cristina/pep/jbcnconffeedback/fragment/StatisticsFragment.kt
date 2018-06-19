@@ -1,8 +1,5 @@
 package cat.cristina.pep.jbcnconffeedback.fragment
 
-//import com.github.mikephil.charting.components.Description
-//import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
-import android.app.ProgressDialog
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.res.Configuration
@@ -13,12 +10,14 @@ import android.support.v4.app.Fragment
 import android.support.v7.preference.PreferenceManager
 import android.util.Log
 import android.view.*
+import android.widget.ProgressBar
 import android.widget.Toast
 import cat.cristina.pep.jbcnconffeedback.R
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
 import cat.cristina.pep.jbcnconffeedback.model.DatabaseHelper
 import cat.cristina.pep.jbcnconffeedback.model.UtilDAOImpl
 import cat.cristina.pep.jbcnconffeedback.utils.PreferenceKeys
+import cat.cristina.pep.jbcnconffeedback.utils.shortenName
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
@@ -55,7 +54,6 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
     private var param2: String? = null
     private var listenerStatistics: StatisticsFragmentListener? = null
     private var dataFromFirestore: Map<Long?, List<QueryDocumentSnapshot>>? = null
-    private lateinit var dialog: ProgressDialog
     private lateinit var databaseHelper: DatabaseHelper
     lateinit var sharedPreferences: SharedPreferences
     private var bestTalks: Boolean = true
@@ -104,30 +102,31 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
             return
         }
 
-        dialog = ProgressDialog(activity, ProgressDialog.THEME_HOLO_LIGHT)
-        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER)
-        dialog.setMessage(resources.getString(R.string.loading))
-        dialog.isIndeterminate = true
-        dialog.setCanceledOnTouchOutside(false)
-        dialog.show()
+//        dialog = ProgressDialog(activity, ProgressDialog.THEME_HOLO_LIGHT)
+//        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER)
+//        dialog.setMessage(resources.getString(R.string.loading))
+//        dialog.isIndeterminate = true
+//        dialog.setCanceledOnTouchOutside(false)
+//        dialog.show()
 
         FirebaseFirestore.getInstance()
                 .collection(MainActivity.FIREBASE_COLLECTION)
                 .get()
                 .addOnCompleteListener {
-                    if (it.isSuccessful) {
-                        dataFromFirestore = it.result.groupBy {
-                            it.getLong(MainActivity.FIREBASE_COLLECTION_FIELD_TALK_ID)
-                            //it.getString(MainActivity.FIREBASE_COLLECTION_FIELD_SCHEDULE_ID)?.hashCode()
+                    /* added(), attached and not hidden  */
+                    if (isVisible)
+                        if (it.isSuccessful) {
+                            dataFromFirestore = it.result.groupBy {
+                                it.getLong(MainActivity.FIREBASE_COLLECTION_FIELD_TALK_ID)
+                            }
+                            val numTalks = Integer
+                                    .parseInt(sharedPreferences!!.getString(PreferenceKeys.STATISTICS_TALK_LIMIT_KEY, resources.getString(R.string.pref_default_statistics_talk_limit)))
+                            setupGraphTopNTalks(numTalks)
+                        } else {
+                            progressBar.visibility = ProgressBar.GONE
+                            Toast.makeText(context, R.string.sorry_no_graphic_available, Toast.LENGTH_LONG).show()
+                            //Log.d(TAG, "*** Error *** ${it.exception?.message}")
                         }
-                        val numTalks = Integer
-                                .parseInt(sharedPreferences!!.getString(PreferenceKeys.STATISTICS_TALK_LIMIT_KEY, resources.getString(R.string.pref_default_statistics_talk_limit)))
-                        setupGraphTopNTalks(numTalks)
-                    } else {
-                        dialog.dismiss()
-                        Toast.makeText(context, R.string.sorry_no_graphic_available, Toast.LENGTH_LONG).show()
-                        //Log.d(TAG, "*** Error *** ${it.exception?.message}")
-                    }
                 }
     }
 
@@ -137,7 +136,6 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
     private fun setupGraphTopNTalks(limit: Int) {
 
         try {
-            dialog.setMessage(resources.getString(R.string.processing))
             // Pair<title, avg>
             val listOfIdTitleAndAvg = ArrayList<Triple<Long?, String, Double>>()
             val labels = ArrayList<String>()
@@ -168,7 +166,7 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
                             var author = utilDAOImpl.lookupSpeakerByRef(refAuthor!!).name
 
                             /* Si el nombre es demasiado largo se saldra de la barra  */
-                            author = author.substring(0, 1) + "." + author.substring(author.indexOf(" ") + 1)
+                            author = shortenName(author)
                             title = if (title.length > 35) "'${StringBuilder(title.substring(0, 35)).toString()}...' by $author. ($votes votes)"
                             else "'$title' by $author. ($votes votes)"
                             listOfIdTitleAndAvg.add(Triple(it.key, title, avg!!))
@@ -256,7 +254,7 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
             //Toast.makeText(context, error.message, Toast.LENGTH_SHORT).show()
             Log.d(TAG, "************************************ ${error.printStackTrace(System.err)}")
         } finally {
-            dialog.dismiss()
+            progressBar.visibility = ProgressBar.GONE
         }
 
     }

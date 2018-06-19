@@ -8,6 +8,17 @@
     android:orientation="horizontal"
     tools:context=".fragment.dialogs.PieChartDialogFragment">
 
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:progress="50"
+        android:background="#000"
+        android:padding="20dp"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:indeterminate="true"/>
+
     <com.github.mikephil.charting.charts.PieChart
         android:id="@+id/pie_chart_id"
         android:layout_width="match_parent"
