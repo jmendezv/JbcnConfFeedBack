@@ -134,10 +134,7 @@ class MainActivity :
             Toast.makeText(applicationContext, "${resources.getString(R.string.sorry_working_offline)}", Toast.LENGTH_SHORT).show()
         }
 
-        /*
-        * This listener emulates a kind of 'home-button' in the logo from the drawer.
-        *
-        * */
+        /* This listener emulates a kind of 'home-button' in the logo from the drawer */
         nav_view.getHeaderView(0).setOnClickListener {
 
             if (!autoMode) {
@@ -176,11 +173,7 @@ class MainActivity :
         setupContentProviders()
     }
 
-    /*
-    * This method cancel pending firebase request if any and cancel what ever timers there are
-    * schedules in auto mode
-    *
-    * */
+    /* This method cancel pending firebase's request and cancel what ever timers there are scheduled */
     override fun onDestroy() {
         Log.d(TAG, "onDestroy()")
         super.onDestroy()
@@ -223,12 +216,13 @@ class MainActivity :
 
             downloadSpeakers()
         } else {
-            setupDataAlreadyDownloaded()
+            setupWorkingMode()
         }
 
     }
 
-    private fun setupDataAlreadyDownloaded(): Unit {
+    /* Select auto or manual mode  */
+    private fun setupWorkingMode(): Unit {
 
         /* configuración del modo de trabajo */
         autoMode = getAutoModeAndRoomName().first
@@ -314,6 +308,7 @@ class MainActivity :
             }
         }
 
+        /* No talks pending today  */
         if (talksToSchedule.isEmpty()) {
             val fragment = WelcomeFragment.newInstance(roomName, resources.getString(R.string.sorry_no_timers_to_schedule))
             switchFragment(fragment, "$WELCOME_FRAGMENT$roomName", false)
@@ -335,18 +330,21 @@ class MainActivity :
         /* Show initial screen with first talk title  */
         val sortedOnlyTalksList = talksToSchedule.keys.sorted()
 
-        //.collect(Collectors.toList())
-
         /* Posem el primer welcomefragment  */
+        var nextTalkTitleAndAuthorName = sortedOnlyTalksList[0].title
 
-        var nextTalkTitle = sortedOnlyTalksList[0].title
-        nextTalkTitle = if (nextTalkTitle.length > 75) nextTalkTitle.substring(0, 75) + "..." else nextTalkTitle
+        nextTalkTitleAndAuthorName = shortenTitleTo(nextTalkTitleAndAuthorName, 75)
+
         var speakerRef = sortedOnlyTalksList[0].speakers?.get(0)
-        var speakerName = utilDAOImpl.lookupSpeakerByRef(speakerRef!!).name
-        nextTalkTitle = "Next talk: '$nextTalkTitle' By $speakerName"
-        switchFragment(WelcomeFragment.newInstance(roomName, nextTalkTitle), WELCOME_FRAGMENT, false)
 
-        // from 0 to timersCount - 1
+        var speakerName = utilDAOImpl.lookupSpeakerByRef(speakerRef!!).name
+
+        speakerName = shortenTitleTo(title = speakerName, maxLength = 35)
+
+        nextTalkTitleAndAuthorName = "Next talk: '$nextTalkTitleAndAuthorName' By $speakerName"
+
+        switchFragment(WelcomeFragment.newInstance(roomName, nextTalkTitleAndAuthorName), WELCOME_FRAGMENT, false)
+
         for (index in 0 until timersCount) {
 
             val thisTalk = sortedOnlyTalksList[index]
@@ -363,16 +361,9 @@ class MainActivity :
             val showVoteFragmentDelay = timesAndLocations?.first!!.startVotingDateTime.time.time - System.currentTimeMillis()
             val showWelcomeFragmentDelay = timesAndLocations.first.endVotingDateTime.time.time - System.currentTimeMillis()
 
-            //Log.d(TAG, "delays... vote delay $showVoteFragmentDelay welcome delay $showWelcomeFragmentDelay")
-
-            /* Aixo formata el temps que queda perque comenci i acabi l'event actual*/
-            val remainingStartTime = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(showVoteFragmentDelay),
-                    TimeUnit.MILLISECONDS.toMinutes(showVoteFragmentDelay) % TimeUnit.HOURS.toMinutes(1),
-                    TimeUnit.MILLISECONDS.toSeconds(showVoteFragmentDelay) % TimeUnit.MINUTES.toSeconds(1))
-
-            val remainingStopTime = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(showWelcomeFragmentDelay),
-                    TimeUnit.MILLISECONDS.toMinutes(showWelcomeFragmentDelay) % TimeUnit.HOURS.toMinutes(1),
-                    TimeUnit.MILLISECONDS.toSeconds(showWelcomeFragmentDelay) % TimeUnit.MINUTES.toSeconds(1))
+            /* For debugging purposes only  */
+            val remainingStartTime = remainingTime(showVoteFragmentDelay)
+            val remainingStopTime = remainingTime(showWelcomeFragmentDelay)
 
             /* Dos runnables, un que posara el fragment VoteFragment i un altre que posarà el fragment WelcomeFragment  */
             val timerTaskIn = Runnable {
@@ -384,21 +375,17 @@ class MainActivity :
             val timerTaskOff = if (index < timersCount - 1) {
 
                 val nextTalk = sortedOnlyTalksList[index + 1]
-
-                nextTalkTitle = nextTalk.title
-
-                nextTalkTitle = shortenTitleTo(nextTalkTitle, 75)
-
+                nextTalkTitleAndAuthorName = nextTalk.title
+                nextTalkTitleAndAuthorName = shortenTitleTo(nextTalkTitleAndAuthorName, 75)
                 speakerRef = nextTalk.speakers?.get(0)
-
                 speakerName = utilDAOImpl.lookupSpeakerByRef(speakerRef!!).name
-
-                nextTalkTitle = "Next talk: '$nextTalkTitle' By $speakerName"
+                speakerName = shortenTitleTo(title = speakerName, maxLength = 35)
+                nextTalkTitleAndAuthorName = "Next talk: '$nextTalkTitleAndAuthorName' By $speakerName"
 
                 Runnable {
 
                     Log.d(TAG, "WelcomeFragment.........")
-                    switchFragment(WelcomeFragment.newInstance(roomName, nextTalkTitle), WELCOME_FRAGMENT, false)
+                    switchFragment(WelcomeFragment.newInstance(roomName, nextTalkTitleAndAuthorName), WELCOME_FRAGMENT, false)
                     timerCounter = AtomicInteger(timerCounter.decrementAndGet())
 
                 }
@@ -424,12 +411,11 @@ class MainActivity :
 
         }
 
-        //Toast.makeText(this, R.string.setting_timers, Toast.LENGTH_LONG).show()
+        /* Divided by two because there are 2 runnables for each talk scheduled */
         Toast.makeText(this, """${scheduledFutures?.size?.div(2)
                 ?: "0"} timers set""", Toast.LENGTH_SHORT).show()
 
         /* Cerramos el executor service para que no se sirvan más tareas, pero las tareas pendientes no se cancelan  */
-
         scheduledExecutorService?.shutdown()
     }
 
@@ -457,11 +443,7 @@ class MainActivity :
         requestQueue?.add(speakersRequest)
     }
 
-    /*
-    * This method first calls the downloadTalks() method to start the download of talks, meanwhile
-    * it parses and persist the JSON data from the downloadSpeakers() method
-    *
-    * */
+    /* This method parses and persist the JSON data from the downloadSpeakers() method */
     private fun parseAndStoreSpeakers(speakersJson: String) {
 
         downloadTalks()
@@ -471,27 +453,23 @@ class MainActivity :
         val speakerDao: Dao<Speaker, Int> = databaseHelper.getSpeakerDao()
         val gson = Gson()
 
-        for (i in 0 until (items.length())) {
+        for (index in 0 until (items.length())) {
 
-            val speakerObject = items.getJSONObject(i)
+            val speakerObject = items.getJSONObject(index)
             val speaker: Speaker = gson.fromJson(speakerObject.toString(), Speaker::class.java)
 
             try {
                 speakerDao.create(speaker)
             } catch (error: Exception) {
                 /* duplicated generally  */
-                Log.e(TAG, "Could not insert speaker ${speaker} ${error.message}")
+                Log.e(TAG, "Could not insert speaker $speaker ${error.message}")
                 if (dialog.isShowing)
                     dialog.dismiss()
             }
         }
     }
 
-    /*
-    * This method downloads the talks' JSON. Note that ALL speakers must be already persisted
-    * in the internal data base before they get persisted.
-    *
-    * */
+    /* This method downloads the talks' JSON. Note that ALL speakers must be already have been persisted */
     private fun downloadTalks() {
 
         val talksRequest = JsonObjectRequest(Request.Method.GET, TALKS_URL, null,
@@ -548,7 +526,7 @@ class MainActivity :
 
         //* setup de la parte sin conexión: en funcio de autoMode/roomName set or not  */
 
-        setupDataAlreadyDownloaded()
+        setupWorkingMode()
     }
 
 
@@ -592,6 +570,7 @@ class MainActivity :
         while (supportFragmentManager.popBackStackImmediate());
     }
 
+    /* This methods saves the filter state to preferences  */
     private fun saveFilteredKey(isFiltered: Boolean): Unit {
 
         sharedPreferences.edit()
@@ -850,10 +829,6 @@ class MainActivity :
                 ?: resources.getString(R.string.sorry_not_connected))
     }
 
-    /* Uses format: "dd/MM/yyyy"  */
-    fun fromDateToString(selectedDate: Date) = MainActivity.simpleDateFormat.format(selectedDate)
-
-
     /* This method is called from onChooseTalkFragment when a talk es selected in manual mode */
     override fun onChooseTalkFragmentClickTalk(item: TalkContent.TalkItem?) {
 
@@ -999,7 +974,7 @@ class MainActivity :
 
         if (autoMode) {
             setupContentProviders()
-            setupDataAlreadyDownloaded()
+            setupWorkingMode()
         } else {
             cancelTimers()
             setChooseTalkFragment("$CHOOSE_TALK_FRAGMENT$roomName")

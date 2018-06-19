@@ -1,5 +1,9 @@
 package cat.cristina.pep.jbcnconffeedback.utils
 
+import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
+import java.util.*
+import java.util.concurrent.TimeUnit
+
 /*
 * The first time you run or debug your project in Android Studio,
 * the IDE automatically creates the debug keystore and certificate in
@@ -91,6 +95,21 @@ package cat.cristina.pep.jbcnconffeedback.utils
 //            }
 
 
+/* This method shortens title to maxLength */
 internal fun shortenTitleTo(title: String, maxLength: Int = 65): String =
         if (title.length > maxLength) "${title.substring(0, maxLength)}..."
         else title
+
+/* Uses format: "dd/MM/yyyy"  */
+internal fun fromDateToString(selectedDate: Date) = MainActivity.simpleDateFormat.format(selectedDate)
+
+/* This method shortens title to maxLength with additional padding */
+internal fun shortenTitleToWithPadding(title: String, maxLength: Int = 65): String =
+        if (title.length > maxLength) "${title.substring(0, maxLength)}...     "
+        else "$title     "
+
+/* Aixo formata el temps que queda perque comenci i acabi l'event actual*/
+internal fun remainingTime(ms: Long): String =
+        String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(ms),
+        TimeUnit.MILLISECONDS.toMinutes(ms) % TimeUnit.HOURS.toMinutes(1),
+        TimeUnit.MILLISECONDS.toSeconds(ms) % TimeUnit.MINUTES.toSeconds(1))
