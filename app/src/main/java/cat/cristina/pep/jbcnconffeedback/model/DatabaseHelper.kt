@@ -136,6 +136,12 @@ data class DatabaseHelper(val context: Context) : OrmLiteSqliteOpenHelper(contex
         super.onOpen(db)
     }
 
+    internal fun clearSpeakersAndTalks() {
+        TableUtils.clearTable(connectionSource, Speaker::class.java)
+        TableUtils.clearTable(connectionSource, Talk::class.java)
+        TableUtils.clearTable(connectionSource, SpeakerTalk::class.java)
+    }
+
     internal fun getSpeakerDao(): Dao<Speaker, Int> = getDao(Speaker::class.java)
 
     internal fun getTalkDao(): Dao<Talk, Int> = getDao(Talk::class.java)

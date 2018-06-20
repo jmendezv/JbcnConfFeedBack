@@ -131,7 +131,7 @@ class MainActivity :
         if (connected) {
             requestQueue = Volley.newRequestQueue(this)
         } else {
-            Toast.makeText(applicationContext, "${resources.getString(R.string.sorry_working_offline)}", Toast.LENGTH_SHORT).show()
+            toast(R.string.sorry_working_offline)
         }
 
         /* This listener emulates a kind of 'home-button' in the logo from the drawer */
@@ -228,7 +228,7 @@ class MainActivity :
             if (roomName == resources.getString(R.string.pref_default_room_name)) {
 
                 sharedPreferences.edit().putBoolean(PreferenceKeys.AUTO_MODE_KEY, false).commit()
-                Toast.makeText(this, resources.getString(R.string.pref_default_room_name), Toast.LENGTH_SHORT).show()
+                toast(R.string.pref_default_room_name)
                 setChooseTalkFragment(CHOOSE_TALK_FRAGMENT)
 
             } else { // autoMode and roomName set
@@ -316,7 +316,7 @@ class MainActivity :
         var timerCounter: AtomicInteger by Delegates.observable(AtomicInteger(timersCount)) { property, oldValue, newValue ->
 
             if (newValue.get() == 0) {
-                val fragment = AreYouSureDialogFragment.newInstance(resources.getString(R.string.tasks_finished))
+                val fragment = AreYouSureDialogFragment.newInstance(resources.getString(R.string.tasks_finished), MainActivity.ARE_YOU_SURE_DIALOG_EXIT_APPLICATION_ACTION)
                 fragment.show(supportFragmentManager, ARE_YOU_SURE_DIALOG_FRAGMENT)
             }
 
@@ -407,8 +407,9 @@ class MainActivity :
         }
 
         /* Divided by two because there are 2 runnables for each talk scheduled */
-        Toast.makeText(this, """${scheduledFutures?.size?.div(2)
-                ?: "0"} timers set""", Toast.LENGTH_SHORT).show()
+        toast("""${scheduledFutures?.size?.div(2) ?: "0"} timers set""")
+//        Toast.makeText(this, """${scheduledFutures?.size?.div(2)
+//                ?: "0"} timers set""", Toast.LENGTH_SHORT).show()
 
         /* Cerramos el executor service para que no se sirvan más tareas, pero las tareas pendientes no se cancelan  */
         scheduledExecutorService?.shutdown()
@@ -429,7 +430,7 @@ class MainActivity :
                         customDialog.dismiss()
 //                    if (dialog.isShowing)
 //                        dialog.dismiss()
-                    Toast.makeText(this, error.message, Toast.LENGTH_SHORT).show()
+                    toast(error.message!!)
                     //Log.e(TAG, error.message)
                 })
 
@@ -482,7 +483,7 @@ class MainActivity :
                     if (customDialog.isShowing)
                         customDialog.dismiss()
 
-                    Toast.makeText(this, error.message, Toast.LENGTH_SHORT).show()
+                    toast(error.message!!)
 
                 })
 
@@ -586,7 +587,7 @@ class MainActivity :
 
             /* aixo evita sortir de l'app amb el back button  */
             if (supportFragmentManager.backStackEntryCount == 0) {
-                Toast.makeText(this, R.string.choose_finish_to_exit, Toast.LENGTH_SHORT).show()
+                toast(R.string.choose_finish_to_exit)
                 return
             }
 
@@ -629,7 +630,7 @@ class MainActivity :
             }
 
             R.id.action_logout -> {
-                Toast.makeText(this, R.string.action_logout, Toast.LENGTH_SHORT).show()
+                toast(R.string.action_logout)
                 isLogIn = false
                 saveFilteredKey(false)
                 invalidateOptionsMenu()
@@ -698,10 +699,12 @@ class MainActivity :
             }
 
             R.id.action_refresh -> {
+                val fragment = AreYouSureDialogFragment.newInstance(resources.getString(R.string.are_you_sure_refresh), MainActivity.ARE_YOU_SURE_DIALOG_FRESH_START_ACTION)
+                fragment.show(supportFragmentManager, ARE_YOU_SURE_DIALOG_FRAGMENT)
             }
 
             R.id.action_finish -> {
-                val fragment = AreYouSureDialogFragment.newInstance(resources.getString(R.string.are_you_sure))
+                val fragment = AreYouSureDialogFragment.newInstance(resources.getString(R.string.are_you_sure_quit), MainActivity.ARE_YOU_SURE_DIALOG_EXIT_APPLICATION_ACTION)
                 fragment.show(supportFragmentManager, ARE_YOU_SURE_DIALOG_FRAGMENT)
             }
 
@@ -732,6 +735,9 @@ class MainActivity :
     private fun createCVSFromStatistics(fileName: String): Unit {
 
         var csvWriter: CSVWriter? = null
+
+        val dialog = CustomDialog(this, R.drawable.spinner, R.string.generating_file)
+        dialog.show()
 
         try {
             val file = File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName)
@@ -765,9 +771,11 @@ class MainActivity :
 
 
         } catch (error: Exception) {
-
+            toast(R.string.sorry_error_generating_csv_file)
         } finally {
             csvWriter?.close()
+            if (dialog.isShowing)
+                dialog.dismiss()
         }
     }
 
@@ -788,9 +796,9 @@ class MainActivity :
         val componentName = emailIntent.resolveActivity(packageManager)
 
         if (componentName != null)
-            startActivity(Intent.createChooser(emailIntent, "Pick an Email provider"))
+            startActivity(Intent.createChooser(emailIntent, resources.getString(R.string.pick_email_provider)))
         else
-            Toast.makeText(this, R.string.sorry_no_app_to_attend_this_request, Toast.LENGTH_SHORT).show()
+            toast(R.string.sorry_no_app_to_attend_this_request)
 
     }
 
@@ -798,7 +806,7 @@ class MainActivity :
     private fun downloadScoring(): Unit {
 
         if (!isDeviceConnectedToWifiOrData().first) {
-            Toast.makeText(this, R.string.sorry_not_connected, Toast.LENGTH_SHORT).show()
+            toast(R.string.sorry_not_connected)
             return
         }
 
@@ -823,6 +831,12 @@ class MainActivity :
                     }
                 }
 
+    }
+
+    /* This methods clears the database and restart the whole process  */
+    private fun freshStart() {
+        databaseHelper.clearSpeakersAndTalks()
+        setupDownloadData()
     }
 
     /* This method checks whether the device is connected or not */
@@ -867,7 +881,7 @@ class MainActivity :
         if (scoreDao.countOf() > 0) {
             if (isDeviceConnectedToWifiOrData().first) {
 
-                Toast.makeText(this, R.string.success_data_updated, Toast.LENGTH_SHORT).show()
+                toast(R.string.success_data_updated)
 
                 scoreDao.queryForAll().forEach {
 
@@ -891,10 +905,10 @@ class MainActivity :
                             }
                 }
             } else { // no connection
-                Toast.makeText(this, R.string.sorry_not_connected, Toast.LENGTH_SHORT).show()
+                toast(R.string.sorry_not_connected)
             }
         } else { // no records
-            Toast.makeText(this, R.string.sorry_no_local_data, Toast.LENGTH_SHORT).show()
+            toast(R.string.sorry_no_local_data)
         }
     }
 
@@ -968,6 +982,14 @@ class MainActivity :
 
     }
 
+    public fun toast(stringId: Int) {
+        Toast.makeText(this, stringId, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun toast(msg: String) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+    }
+
     /* This method is called from StatisticFragment when user clicks one bar */
     override fun onStatisticsFragmentInteraction(givenTalkId: Long?) {
         val fragment = PieChartDialogFragment.newInstance(givenTalkId!!)
@@ -1003,7 +1025,7 @@ class MainActivity :
         when (answer) {
 
             Dialog.BUTTON_POSITIVE -> {
-                Toast.makeText(this, R.string.action_login, Toast.LENGTH_SHORT).show()
+                toast(R.string.action_login)
                 isLogIn = true
                 invalidateOptionsMenu()
                 if (!autoMode) {
@@ -1054,7 +1076,8 @@ class MainActivity :
             }
 
             ARE_YOU_SURE_DIALOG_FRESH_START_RESPONSE -> {
-                // freshStart()
+                freshStart()
+                toast(R.string.data_refreshed)
             }
 
             ARE_YOU_SURE_DIALOG_CANCEL_RESPONSE -> {

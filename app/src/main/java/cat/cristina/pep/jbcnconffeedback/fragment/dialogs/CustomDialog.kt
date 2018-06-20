@@ -17,7 +17,7 @@ import android.view.animation.RotateAnimation
 import android.widget.TextView
 
 
-class CustomDialog(context: Context, resourceImageId: Int) : Dialog(context, R.style.TransparentProgressDialog) {
+class CustomDialog(context: Context, resourceImageId: Int, resourceStringId: Int = R.string.loading) : Dialog(context, R.style.TransparentProgressDialog) {
 
     private lateinit var imageView: ImageView
     private lateinit var textView: TextView
@@ -40,7 +40,7 @@ class CustomDialog(context: Context, resourceImageId: Int) : Dialog(context, R.s
         textView.setTextColor(Color.WHITE)
         textView.setPadding(0, 5, 0, 0)
         textView.setTypeface(textView.typeface, Typeface.BOLD_ITALIC)
-        textView.setText(R.string.loading)
+        textView.setText(resourceStringId)
         layout.addView(imageView, linearLayoutLayoutParams)
         layout.addView(textView, linearLayoutLayoutParams)
         addContentView(layout, linearLayoutLayoutParams)

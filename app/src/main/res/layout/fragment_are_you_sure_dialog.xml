@@ -29,6 +29,6 @@
         android:layout_marginBottom="16dp"
         android:fontFamily="sans-serif"
         android:textSize="@dimen/sixteen"
-        android:text="@string/are_you_sure" />
+        android:text="@string/are_you_sure_quit" />
 
 </LinearLayout>

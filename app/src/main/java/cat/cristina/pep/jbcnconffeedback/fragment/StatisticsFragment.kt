@@ -98,7 +98,8 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
     private fun downloadScoring(): Unit {
 
         if (!(context as MainActivity).isDeviceConnectedToWifiOrData().first) {
-            Toast.makeText(context, R.string.sorry_no_graphic_available, Toast.LENGTH_LONG).show()
+            (activity as MainActivity).toast(R.string.sorry_no_graphic_available)
+            //Toast.makeText(context, R.string.sorry_no_graphic_available, Toast.LENGTH_LONG).show()
             return
         }
 
@@ -125,7 +126,8 @@ class StatisticsFragment : Fragment(), OnChartValueSelectedListener {
                 .addOnFailureListener {
                     if (isVisible) {
                         progressBar.visibility = ProgressBar.GONE
-                        Toast.makeText(context, R.string.sorry_no_graphic_available, Toast.LENGTH_LONG).show()
+                        (activity as MainActivity).toast(R.string.sorry_no_graphic_available)
+                        //Toast.makeText(context, R.string.sorry_no_graphic_available, Toast.LENGTH_LONG).show()
                     }
                 }
 

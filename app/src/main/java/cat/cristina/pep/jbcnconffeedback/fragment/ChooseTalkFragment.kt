@@ -10,7 +10,6 @@ import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.SearchView
 import android.view.*
-import android.widget.Toast
 import cat.cristina.pep.jbcnconffeedback.R
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity.Companion.simpleDateFormat
@@ -20,7 +19,6 @@ import cat.cristina.pep.jbcnconffeedback.fragment.provider.TalkContent
 import cat.cristina.pep.jbcnconffeedback.fragment.provider.TalkContent.TalkItem
 import cat.cristina.pep.jbcnconffeedback.utils.PreferenceKeys
 import java.util.*
-import java.util.stream.Collectors
 
 /**
  * A fragment representing a list of Items.
@@ -95,7 +93,9 @@ class ChooseTalkFragment : Fragment() {
         }
         if (!sharedPreferences.getBoolean(PreferenceKeys.AUTO_MODE_KEY, false)) {
             if (numTalks == 0) {
-                Toast.makeText(context, "${resources.getString(R.string.sorry_no_talks)}", Toast.LENGTH_SHORT).show()
+
+                (activity as MainActivity).toast(R.string.sorry_no_talks)
+                //Toast.makeText(context, "${resources.getString(R.string.sorry_no_talks)}", Toast.LENGTH_SHORT).show()
             }
             //Toast.makeText(context, "$numTalks ${resources.getString(R.string.showing_n_talks)}", Toast.LENGTH_SHORT).show()
         }
@@ -177,7 +177,8 @@ class ChooseTalkFragment : Fragment() {
             R.id.action_filter -> {
                 val roomName = sharedPreferences.getString(PreferenceKeys.ROOM_KEY, resources.getString(R.string.pref_default_room_name))
                 if (roomName == resources.getString(R.string.pref_default_room_name)) {
-                    Toast.makeText(context, resources.getString(R.string.sorry_no_room_set), Toast.LENGTH_SHORT).show()
+                    (activity as MainActivity).toast(R.string.sorry_no_room_set)
+                    //Toast.makeText(context, resources.getString(R.string.sorry_no_room_set), Toast.LENGTH_SHORT).show()
                 } else {
                     listener?.onChooseTalkFragmentFilterTalks(!isFiltered)
                 }
