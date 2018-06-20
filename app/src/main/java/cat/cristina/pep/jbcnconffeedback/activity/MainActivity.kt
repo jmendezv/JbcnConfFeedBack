@@ -611,6 +611,17 @@ class MainActivity :
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle?) {
+        super.onSaveInstanceState(outState)
+        outState?.putBoolean(BUNDLE_LOGGED_KEY, isLogIn)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle?) {
+        super.onRestoreInstanceState(savedInstanceState)
+        if (savedInstanceState?.containsKey(BUNDLE_LOGGED_KEY)!!)
+            isLogIn = savedInstanceState?.getBoolean(BUNDLE_LOGGED_KEY)
+    }
+
     /* You must return true for the menu to be displayed; if you return false it will not be shown */
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main, menu)
@@ -1119,6 +1130,9 @@ class MainActivity :
         const val ARE_YOU_SURE_DIALOG_FRAGMENT = "AreYouSureDialogFragment"
         const val PERSONAL_STUFF_DIALOG_FRAGMENT = "PersonalStuffDialogFragment"
         const val PIE_CHART_DIALOG_FRAGMENT = "PieChartDialogFragment"
+
+
+        const val BUNDLE_LOGGED_KEY = "logged_key"
 
         // const val JBCNCONF_JSON_SCHEDULES_FILE_NAME = "schedules.json"
         const val JBCNCONF_JSON_SCHEDULES_FILE_NAME = "schedules_fake.json"
