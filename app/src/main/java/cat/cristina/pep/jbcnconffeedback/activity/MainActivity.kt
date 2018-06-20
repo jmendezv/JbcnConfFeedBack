@@ -51,6 +51,7 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.thread
 import kotlin.properties.Delegates
 
 private const val SPEAKERS_URL = "https://raw.githubusercontent.com/barcelonajug/jbcnconf_web/gh-pages/2018/_data/speakers.json"
@@ -717,7 +718,10 @@ class MainActivity :
             }
 
             R.id.action_send_statistics -> {
-                downloadScoring()
+                thread {
+                    sendEmail()
+                }
+                //downloadScoring()
             }
 
             R.id.action_update -> {

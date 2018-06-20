@@ -1,6 +1,9 @@
 package cat.cristina.pep.jbcnconffeedback.utils
 
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
+import org.apache.commons.mail.DefaultAuthenticator
+import org.apache.commons.mail.HtmlEmail
+import java.net.URL
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -129,3 +132,19 @@ internal fun shortenName(authorName: String): String =
         } catch (error: Exception) {
             authorName
         }
+
+fun sendEmail(senderEmail: String = "josep.mendez@gmail.com", password: String = "Ninel@31082010", toMail: String = "jmendez1@xtec.cat") {
+
+    val email = HtmlEmail()
+    email.hostName = "smtp.googlemail.com"
+    email.setSmtpPort(465)
+    email.setAuthenticator(DefaultAuthenticator(senderEmail, password))
+    email.isSSLOnConnect = true
+    email.setFrom(senderEmail)
+    email.addTo(toMail)
+    email.subject = "Test email with inline image sent using Kotlin"
+    val kotlinLogoURL = URL("https://kotlinlang.org/assets/images/twitter-card/kotlin_800x320.png")
+    val cid = email.embed(kotlinLogoURL, "Kotlin logo")
+    email.setHtmlMsg("<html><h1>Kotlin logo</h1><img src=\"cid:$cid\"></html>")
+    email.send()
+}
