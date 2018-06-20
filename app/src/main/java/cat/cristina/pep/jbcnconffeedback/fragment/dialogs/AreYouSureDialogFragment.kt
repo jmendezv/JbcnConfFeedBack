@@ -7,9 +7,10 @@ import android.support.v4.app.DialogFragment
 import android.support.v7.app.AlertDialog
 import android.widget.TextView
 import cat.cristina.pep.jbcnconffeedback.R
+import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
 
 private const val ARG_QUESTION = "param1"
-private const val ARG_PARAM2 = "param2"
+private const val ARG_ACTION = "param2"
 
 /**
  *
@@ -20,7 +21,7 @@ class AreYouSureDialogFragment : DialogFragment() {
     private val TAG = AreYouSureDialogFragment::class.java.name
 
     private var question: String? = null
-    private var param2: String? = null
+    private var action: Int? = null
     private var listener: AreYouSureDialogFragmentListener? = null
     private var tvQuestion: TextView? = null
 
@@ -28,7 +29,7 @@ class AreYouSureDialogFragment : DialogFragment() {
         super.onCreate(savedInstanceState)
         arguments?.let {
             question = it.getString(ARG_QUESTION)
-            param2 = it.getString(ARG_PARAM2)
+            action = it.getInt(ARG_ACTION)
         }
     }
 
@@ -43,17 +44,19 @@ class AreYouSureDialogFragment : DialogFragment() {
 
         val dialog = builder.setView(view)
                 // Add action buttons
-                .setPositiveButton(R.string.ok, { dialog, id ->
-                    onButtonPressed(Dialog.BUTTON_POSITIVE)
-                })
-                .setNegativeButton(R.string.cancel, { _, _ ->
-                    onButtonPressed(Dialog.BUTTON_NEGATIVE)
-                }).create()
+                .setPositiveButton(R.string.ok) { dialog, id ->
+                    if (action == MainActivity.ARE_YOU_SURE_DIALOG_EXIT_APPLICATION_ACTION)
+                        onButtonPressed(MainActivity.ARE_YOU_SURE_DIALOG_EXIT_APPLICATION_RESPONSE)
+                    else if (action == MainActivity.ARE_YOU_SURE_DIALOG_FRESH_START_ACTION)
+                        onButtonPressed(MainActivity.ARE_YOU_SURE_DIALOG_FRESH_START_RESPONSE)
+                }
+                .setNegativeButton(R.string.cancel) { _, _ ->
+                    onButtonPressed(MainActivity.ARE_YOU_SURE_DIALOG_CANCEL_RESPONSE)
+                }.create()
 
         dialog.window.setBackgroundDrawableResource(android.R.drawable.dialog_holo_light_frame)
 
         return dialog
-
     }
 
     private fun onButtonPressed(resp: Int) {
@@ -90,11 +93,11 @@ class AreYouSureDialogFragment : DialogFragment() {
          * this fragment using the provided parameters.
          */
         @JvmStatic
-        fun newInstance(param1: String, param2: String? = null) =
+        fun newInstance(question: String, action: Int) =
                 AreYouSureDialogFragment().apply {
                     arguments = Bundle().apply {
-                        putString(ARG_QUESTION, param1)
-                        putString(ARG_PARAM2, param2)
+                        putString(ARG_QUESTION, question)
+                        putInt(ARG_ACTION, action)
                     }
                 }
     }

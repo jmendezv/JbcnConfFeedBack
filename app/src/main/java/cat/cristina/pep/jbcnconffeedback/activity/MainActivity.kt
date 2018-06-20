@@ -697,6 +697,9 @@ class MainActivity :
                 onChooseTalkFragmentUpdateTalks()
             }
 
+            R.id.action_refresh -> {
+            }
+
             R.id.action_finish -> {
                 val fragment = AreYouSureDialogFragment.newInstance(resources.getString(R.string.are_you_sure))
                 fragment.show(supportFragmentManager, ARE_YOU_SURE_DIALOG_FRAGMENT)
@@ -1046,14 +1049,15 @@ class MainActivity :
 
         when (resp) {
 
-            Dialog.BUTTON_POSITIVE -> {
+            ARE_YOU_SURE_DIALOG_EXIT_APPLICATION_RESPONSE -> {
                 finishAndRemoveTask()
             }
 
-            Dialog.BUTTON_NEUTRAL -> {
+            ARE_YOU_SURE_DIALOG_FRESH_START_RESPONSE -> {
+                // freshStart()
             }
 
-            Dialog.BUTTON_NEGATIVE -> {
+            ARE_YOU_SURE_DIALOG_CANCEL_RESPONSE -> {
             }
 
         }
@@ -1103,6 +1107,14 @@ class MainActivity :
         const val FIREBASE_COLLECTION_FIELD_SCHEDULE_ID = "schedule_id"
         const val FIREBASE_COLLECTION_FIELD_SCORE = "score"
         const val FIREBASE_COLLECTION_FIELD_DATE = "date"
+
+
+        const val ARE_YOU_SURE_DIALOG_EXIT_APPLICATION_ACTION = 0X1
+        const val ARE_YOU_SURE_DIALOG_FRESH_START_ACTION = 0X2
+
+        const val ARE_YOU_SURE_DIALOG_CANCEL_RESPONSE = 0X0
+        const val ARE_YOU_SURE_DIALOG_EXIT_APPLICATION_RESPONSE = 0X1
+        const val ARE_YOU_SURE_DIALOG_FRESH_START_RESPONSE = 0X2
 
         val simpleDateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         val simpleDateFormatCSV = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())

@@ -31,25 +31,25 @@
                 android:title="@string/menu_send_statistics" />
 
             <item
-            android:id="@+id/action_update"
-            android:icon="@drawable/drawer_upload"
-            android:title="@string/menu_update" />
-
-            <!-- item
-                android:id="@+id/action_pick_date"
-                android:icon="@drawable/drawer_schedule"
-                android:title="@string/menu_pick_date" / -->
+                android:id="@+id/action_update"
+                android:icon="@drawable/drawer_upload"
+                android:title="@string/menu_update" />
 
             <item
-                android:id="@+id/action_about_us"
-                android:icon="@drawable/drawer_info"
-                android:title="@string/menu_about_us" />
+                android:id="@+id/action_refresh"
+                android:icon="@drawable/drawer_schedule"
+                android:title="@string/menu_refresh" />
 
         </group>
 
         <group
             android:id="@+id/menu_bottom"
             android:checkableBehavior="single">
+
+            <item
+                android:id="@+id/action_about_us"
+                android:icon="@drawable/drawer_info"
+                android:title="@string/menu_about_us" />
 
             <item
                 android:id="@+id/action_license"
