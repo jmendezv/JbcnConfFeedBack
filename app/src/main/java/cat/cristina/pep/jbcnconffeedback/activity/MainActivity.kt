@@ -805,7 +805,7 @@ class MainActivity :
         }
     }
 
-    /* This method sends an email with a CSV file attached */
+    /* This method sends an email Intent with a CSV file attached */
     private fun sendCSVByEmail(fileName: String): Unit {
 
         var emailAddress = arrayOf(sharedPreferences.getString(PreferenceKeys.EMAIL_KEY, resources.getString(R.string.pref_default_email)))

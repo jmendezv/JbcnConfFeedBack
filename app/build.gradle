@@ -108,7 +108,9 @@ dependencies {
 
     //implementation files('build/libs/openbeans-1.0.jar')
     implementation 'de.hdodenhof:circleimageview:2.2.0'
-    implementation files('libs/java-mail-1.4.4.jar')
+    implementation files('libs/activation-1.1.1.jar')
+    implementation files('libs/commons-email-1.4.jar')
+    implementation files('libs/javax.mail-1.5.2.jar')
 }
 
 apply plugin: 'com.google.gms.google-services'
