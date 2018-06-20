@@ -89,7 +89,7 @@ class MainActivity :
     private var offsetDelay: Int = 0
     private val talkSchedules = mutableMapOf<Talk, Pair<SessionTimes, String>>()
     private lateinit var sharedPreferences: SharedPreferences
-    private var filteredTalks = false
+    private var isFilterOn = false
     private var dataFromFirestore: Map<Long?, List<QueryDocumentSnapshot>>? = null
     private var selectedDate = Date()
     private var isLogIn = false
@@ -144,7 +144,7 @@ class MainActivity :
                     for (i in 1..stackSize) {
                         supportFragmentManager.popBackStack()
                     }
-                    setChooseTalkFragment(CHOOSE_TALK_FRAGMENT)
+                    setChooseTalkFragment("$CHOOSE_TALK_FRAGMENT${System.currentTimeMillis()}")
                     closeLateralMenu()
                 }
             }
@@ -166,7 +166,24 @@ class MainActivity :
         supportFragmentManager.beginTransaction()
                 .add(assetsManagerFragment, ASSETS_MANAGER_FRAGMENT).commit()
 
+        savedInstanceState?.run {
+            restoreAppState(this)
+        }
+
         setupDownloadData()
+
+    }
+
+    private fun restoreAppState(savedInstanceState: Bundle?) {
+
+        if (savedInstanceState?.containsKey(BUNDLE_LOGGED_KEY)!!)
+            isLogIn = savedInstanceState?.getBoolean(BUNDLE_LOGGED_KEY)
+
+        if (savedInstanceState?.containsKey(BUNDLE_FILTERED_KEY)!!)
+            isFilterOn = savedInstanceState?.getBoolean(BUNDLE_FILTERED_KEY)
+
+        if (savedInstanceState?.containsKey(BUNDLE_DATE_KEY)!!)
+            selectedDate = simpleDateFormat.parse(savedInstanceState?.getString(BUNDLE_DATE_KEY))
 
     }
 
@@ -229,7 +246,7 @@ class MainActivity :
 
                 sharedPreferences.edit().putBoolean(PreferenceKeys.AUTO_MODE_KEY, false).commit()
                 toast(R.string.pref_default_room_name)
-                setChooseTalkFragment(CHOOSE_TALK_FRAGMENT)
+                setChooseTalkFragment("$CHOOSE_TALK_FRAGMENT${System.currentTimeMillis()}")
 
             } else { // autoMode and roomName set
 
@@ -257,7 +274,7 @@ class MainActivity :
             }
 
         } else { // autoMode is false ->  mode manual
-            setChooseTalkFragment(CHOOSE_TALK_FRAGMENT)
+            setChooseTalkFragment("$CHOOSE_TALK_FRAGMENT${System.currentTimeMillis()}")
         }
 
     }
@@ -568,14 +585,6 @@ class MainActivity :
         while (supportFragmentManager.popBackStackImmediate());
     }
 
-    /* This methods saves the filter state to preferences  */
-    private fun saveFilteredKey(isFiltered: Boolean): Unit {
-
-        sharedPreferences.edit()
-                .putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, isFiltered).apply()
-
-    }
-
     /* This method manages the back button press events */
     override fun onBackPressed() {
 
@@ -611,15 +620,21 @@ class MainActivity :
         }
     }
 
+    /* Called before onStop(). There are no guarantees about whether it will occur before or after onPause() */
     override fun onSaveInstanceState(outState: Bundle?) {
         super.onSaveInstanceState(outState)
+
         outState?.putBoolean(BUNDLE_LOGGED_KEY, isLogIn)
+        outState?.putBoolean(BUNDLE_FILTERED_KEY, isFilterOn)
+        outState?.putString(BUNDLE_DATE_KEY, simpleDateFormat.format(selectedDate))
     }
 
+    /* This method is called between onStart() and onPostCreate(Bundle)  */
     override fun onRestoreInstanceState(savedInstanceState: Bundle?) {
         super.onRestoreInstanceState(savedInstanceState)
-        if (savedInstanceState?.containsKey(BUNDLE_LOGGED_KEY)!!)
-            isLogIn = savedInstanceState?.getBoolean(BUNDLE_LOGGED_KEY)
+
+        restoreAppState(savedInstanceState)
+
     }
 
     /* You must return true for the menu to be displayed; if you return false it will not be shown */
@@ -643,14 +658,14 @@ class MainActivity :
             R.id.action_logout -> {
                 toast(R.string.action_logout)
                 isLogIn = false
-                saveFilteredKey(false)
+                isFilterOn = false
                 invalidateOptionsMenu()
 
                 if (!autoMode) {
                     val actualFragment = supportFragmentManager.findFragmentById(R.id.contentFragment)
                     if (actualFragment?.tag != VOTE_FRAGMENT) {
                         clearBackStack()
-                        setChooseTalkFragment(CHOOSE_TALK_FRAGMENT)
+                        setChooseTalkFragment("$CHOOSE_TALK_FRAGMENT${System.currentTimeMillis()}")
                     } else { // Estan votando: do nothing
                     }
                 } else { // In auto Mode
@@ -737,8 +752,8 @@ class MainActivity :
     /* This method sets the ChooseTalkFragment as active  */
     private fun setChooseTalkFragment(tag: String): Unit {
 
-        val isFilter = sharedPreferences.getBoolean(PreferenceKeys.FILTERED_TALKS_KEY, false)
-        val fragment = newInstance(1, isFilter, fromDateToString(selectedDate), isLogIn)
+        //val isFilter = sharedPreferences.getBoolean(PreferenceKeys.FILTERED_TALKS_KEY, false)
+        val fragment = newInstance(1, isFilterOn, fromDateToString(selectedDate), isLogIn)
         switchFragment(fragment, tag, false)
     }
 
@@ -929,7 +944,7 @@ class MainActivity :
         sharedPreferences.edit()
                 .putBoolean(PreferenceKeys.FILTERED_TALKS_KEY, filtered).apply()
 
-        filteredTalks = filtered
+        isFilterOn = filtered
         /* I change the TAG name because otherwise it wouldn't be displayed  */
         setChooseTalkFragment("$CHOOSE_TALK_FRAGMENT$filtered")
 
@@ -1133,6 +1148,8 @@ class MainActivity :
 
 
         const val BUNDLE_LOGGED_KEY = "logged_key"
+        const val BUNDLE_FILTERED_KEY = "filtered_key"
+        const val BUNDLE_DATE_KEY = "date_key"
 
         // const val JBCNCONF_JSON_SCHEDULES_FILE_NAME = "schedules.json"
         const val JBCNCONF_JSON_SCHEDULES_FILE_NAME = "schedules_fake.json"
