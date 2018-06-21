@@ -8,12 +8,19 @@ import android.preference.PreferenceManager
 import cat.cristina.pep.jbcnconffeedback.R
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
 import org.apache.commons.mail.DefaultAuthenticator
-import org.apache.commons.mail.HtmlEmail
 import org.apache.commons.mail.MultiPartEmail
 import java.io.File
 import java.net.URL
+import java.security.NoSuchAlgorithmException
+import java.security.spec.InvalidKeySpecException
 import java.util.*
 import java.util.concurrent.TimeUnit
+import javax.crypto.Cipher
+import javax.crypto.SecretKey
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.PBEKeySpec
+import javax.crypto.spec.SecretKeySpec
+
 
 /*
 * The first time you run or debug your project in Android Studio,
@@ -179,4 +186,93 @@ private fun sendCSVByEmail(context: Context, fileName: String): Unit {
     else
         (context as MainActivity).toast(R.string.sorry_no_app_to_attend_this_request)
 
+}
+
+object SimpleCrypto {
+
+    private val SALT = "some_salt_to_change!"
+    private val HEX = "0123456789ABCDEF"
+
+    @Throws(Exception::class)
+    fun encrypt(seed: String, cleartext: String): String {
+        val key = generateKey(seed.toCharArray(), SALT.toByteArray())
+        val rawKey = key.encoded
+        val result = encrypt(rawKey, cleartext.toByteArray())
+        return toHex(result)
+    }
+
+    @Throws(Exception::class)
+    fun decrypt(seed: String, encrypted: String): String {
+        val key = generateKey(seed.toCharArray(), SALT.toByteArray())
+        val rawKey = key.encoded
+        val enc = toByte(encrypted)
+        val result = decrypt(rawKey, enc)
+        return String(result)
+    }
+
+    @Throws(NoSuchAlgorithmException::class, InvalidKeySpecException::class)
+    fun generateKey(passphraseOrPin: CharArray, salt: ByteArray): SecretKey {
+        // Number of PBKDF2 hardening rounds to use. Larger values increase
+        // computation time. You should select a value that causes computation
+        // to take >100ms.
+        val iterations = 1000
+
+        // Generate a 256-bit key
+        val outputKeyLength = 256
+
+        val secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
+        val keySpec = PBEKeySpec(passphraseOrPin, salt, iterations, outputKeyLength)
+        return secretKeyFactory.generateSecret(keySpec)
+    }
+
+    @Throws(Exception::class)
+    private fun encrypt(raw: ByteArray, clear: ByteArray): ByteArray {
+        val skeySpec = SecretKeySpec(raw, "AES")
+        val cipher = Cipher.getInstance("AES")
+        cipher.init(Cipher.ENCRYPT_MODE, skeySpec)
+        return cipher.doFinal(clear)
+    }
+
+    @Throws(Exception::class)
+    private fun decrypt(raw: ByteArray, encrypted: ByteArray): ByteArray {
+        val skeySpec = SecretKeySpec(raw, "AES")
+        val cipher = Cipher.getInstance("AES")
+        cipher.init(Cipher.DECRYPT_MODE, skeySpec)
+        return cipher.doFinal(encrypted)
+    }
+
+    fun toHex(txt: String): String {
+        return toHex(txt.toByteArray())
+    }
+
+    fun fromHex(hex: String): String {
+        return String(toByte(hex))
+    }
+
+    fun toByte(hexString: String): ByteArray {
+        val len = hexString.length / 2
+        val result = ByteArray(len)
+
+        for (i in 0 until len)
+            result[i] = Integer.valueOf(hexString.substring(2 * i, 2 * i + 2), 16).toByte()
+
+        return result
+    }
+
+    fun toHex(buf: ByteArray?): String {
+        if (buf == null)
+            return ""
+
+        val result = StringBuffer(2 * buf.size)
+
+        for (i in buf.indices) {
+            appendHex(result, buf[i])
+        }
+
+        return result.toString()
+    }
+
+    private fun appendHex(sb: StringBuffer, b: Byte) {
+        sb.append(HEX[b.toInt() shr 4 and 0x0f]).append(HEX[b.toInt() and 0x0f])
+    }
 }

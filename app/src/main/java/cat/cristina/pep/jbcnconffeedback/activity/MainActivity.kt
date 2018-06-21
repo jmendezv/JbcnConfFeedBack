@@ -174,6 +174,14 @@ class MainActivity :
             restoreAppState(this)
         }
 
+        val simpleCrypto= SimpleCrypto
+
+        val encripted = simpleCrypto.encrypt("whatever", "Ninel")
+
+        val decripted = simpleCrypto.decrypt("whatever", encripted)
+
+        Log.d(TAG, "*********** $encripted was $decripted")
+
         setupDownloadData()
 
     }
