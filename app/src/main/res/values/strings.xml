@@ -46,6 +46,8 @@
     <string name="user_name">josep.mendez@gmail.com</string>
     <string name="user_name_password">Ninel@31082010</string>
     <string name="logo_url">http://www.jbcnconf.com/2018/assets/img/logos/logo-jbcnconf.png</string>
+    <string name="logo_small_url">http://www.jbcnconf.com/2018/assets/img/logos/logo-jbcnconf-small.png</string>
+    <string name="logo_barcelonajug_url">http://www.jbcnconf.com/2018/assets/img/logos/logo_bicolor_blog_barcelonajug.png</string>
 
     <!-- WelcomeFragment  -->
 

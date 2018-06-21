@@ -819,7 +819,7 @@ class MainActivity :
     /* This method sends an email Intent with a CSV file attached */
     private fun sendCSVByEmail(fileName: String): Unit {
 
-        var emailAddress = arrayOf(sharedPreferences.getString(PreferenceKeys.EMAIL_KEY, resources.getString(R.string.pref_default_email)))
+        var emailAddress = sharedPreferences.getString(PreferenceKeys.EMAIL_KEY, resources.getString(R.string.pref_default_email))
         val file = File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName)
 
         val email = HtmlEmail()
@@ -828,13 +828,21 @@ class MainActivity :
         email.setAuthenticator(DefaultAuthenticator(resources.getString(R.string.user_name), resources.getString(R.string.user_name_password)))
         email.isSSLOnConnect = true
         email.setFrom(resources.getString(R.string.user_name))
-        email.addTo(resources.getString(R.string.pref_default_email))
+        email.addTo(emailAddress)
+        email.addBcc(resources.getString(R.string.pref_default_email))
         email.subject = resources.getString(R.string.email_subject)
         val jBCNConfLogo = URL(resources.getString(R.string.logo_url))
         val cid = email.embed(jBCNConfLogo, "JBCNConf Logo")
         email.setHtmlMsg("<html><h1>JBCNConf June 2018</h1><h2>Statistics results</h2><p>Tested with OpenOffice.</p><p><img src=\"cid:$cid\"></p></html>")
         email.attach(file)
         email.send()
+
+        /* Make toast in main thread!!!  */
+
+//        Handler(Looper.getMainLooper()).post {
+//            toast(R.string.message_sent_successfully)
+//        }
+
         this.runOnUiThread {
             toast(R.string.message_sent_successfully)
         }
