@@ -1,8 +1,16 @@
 package cat.cristina.pep.jbcnconffeedback.utils
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Environment
+import android.preference.PreferenceManager
+import cat.cristina.pep.jbcnconffeedback.R
 import cat.cristina.pep.jbcnconffeedback.activity.MainActivity
 import org.apache.commons.mail.DefaultAuthenticator
 import org.apache.commons.mail.HtmlEmail
+import org.apache.commons.mail.MultiPartEmail
+import java.io.File
 import java.net.URL
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -135,7 +143,8 @@ internal fun shortenName(authorName: String): String =
 
 fun sendEmail(senderEmail: String = "josep.mendez@gmail.com", password: String = "Ninel@31082010", toMail: String = "jmendez1@xtec.cat") {
 
-    val email = HtmlEmail()
+//    val email = HtmlEmail()
+    val email = MultiPartEmail()
     email.hostName = "smtp.googlemail.com"
     email.setSmtpPort(465)
     email.setAuthenticator(DefaultAuthenticator(senderEmail, password))
@@ -144,7 +153,30 @@ fun sendEmail(senderEmail: String = "josep.mendez@gmail.com", password: String =
     email.addTo(toMail)
     email.subject = "Test email with inline image sent using Kotlin"
     val kotlinLogoURL = URL("https://kotlinlang.org/assets/images/twitter-card/kotlin_800x320.png")
-    val cid = email.embed(kotlinLogoURL, "Kotlin logo")
-    email.setHtmlMsg("<html><h1>Kotlin logo</h1><img src=\"cid:$cid\"></html>")
+//    val cid = email.embed(kotlinLogoURL, "Kotlin logo")
+//    email.setHtmlMsg("<html><h1>Kotlin logo</h1><img src=\"cid:$cid\"></html>")
     email.send()
+}
+
+/* This method sends an email Intent with a CSV file attached */
+private fun sendCSVByEmail(context: Context, fileName: String): Unit {
+
+    val sharedPreferences =  PreferenceManager.getDefaultSharedPreferences(context)
+    var emailAddress = arrayOf(sharedPreferences.getString(PreferenceKeys.EMAIL_KEY, context.resources.getString(R.string.pref_default_email)))
+    val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName)
+    val emailIntent = Intent(Intent.ACTION_SEND)
+    emailIntent.type = "text/plain"
+    emailIntent.putExtra(Intent.EXTRA_EMAIL, emailAddress)
+    emailIntent.putExtra(Intent.EXTRA_SUBJECT,context.resources.getString(R.string.email_subject))
+    emailIntent.putExtra(Intent.EXTRA_TEXT, context.resources.getString(R.string.email_message))
+    val uri = Uri.fromFile(file)
+    emailIntent.putExtra(Intent.EXTRA_STREAM, uri)
+
+    val componentName = emailIntent.resolveActivity(context.packageManager)
+
+    if (componentName != null)
+        context.startActivity(Intent.createChooser(emailIntent, context.resources.getString(R.string.pick_email_provider)))
+    else
+        (context as MainActivity).toast(R.string.sorry_no_app_to_attend_this_request)
+
 }

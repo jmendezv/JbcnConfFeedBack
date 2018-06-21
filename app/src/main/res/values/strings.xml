@@ -27,6 +27,7 @@
     <string name="sorry_no_timers_to_schedule">Sorry, there are no talks scheduled for today</string>
     <string name="sorry_error_generating_csv_file">Sorry, CSV file was not generated correctly</string>
 
+    <string name="message_sent_successfully">Message sent successfully</string>
     <string name="all_talks_processed">All talks have been processed successfully</string>
     <string name="success_data_updated">All data updated successfully.</string>
     <string name="wrong_credentials">Wrong credentials, try again.</string>
@@ -40,6 +41,11 @@
     <string name="data_refreshed">Data updated successfully</string>
     <string name="generating_file">Generating CSV File</string>
     <string name="pick_email_provider">Pick an Email provider</string>
+    <string name="host_name">smtp.googlemail.com</string>
+    <string name="host_port">465</string>
+    <string name="user_name">josep.mendez@gmail.com</string>
+    <string name="user_name_password">Ninel@31082010</string>
+    <string name="logo_url">http://www.jbcnconf.com/2018/assets/img/logos/logo-jbcnconf.png</string>
 
     <!-- WelcomeFragment  -->
 
@@ -172,7 +178,8 @@
     <string name="pref_title_email">Email</string>
     <string name="menu_update">Upload Votes</string>
     <string name="menu_pick_date">Pick Date</string>
-    <string name="pref_default_email">info@barcelonajug.org</string>
+    <!-- string name="pref_default_email">info@barcelonajug.org</string -->
+    <string name="pref_default_email">jmendez1@xtec.cat</string>
 
     <string name="pref_title_vibrator">Vibrator</string>
     <string name="pref_description_vibrator">Get vibration feedback</string>

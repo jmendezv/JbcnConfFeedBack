@@ -2,11 +2,9 @@ package cat.cristina.pep.jbcnconffeedback.activity
 
 import android.app.Dialog
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.net.ConnectivityManager
 import android.net.NetworkInfo
-import android.net.Uri
 import android.os.*
 import android.support.design.widget.NavigationView
 import android.support.v4.app.Fragment
@@ -41,9 +39,14 @@ import com.j256.ormlite.dao.Dao
 import com.opencsv.CSVWriter
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
+import org.apache.commons.mail.DefaultAuthenticator
+import org.apache.commons.mail.HtmlEmail
 import org.json.JSONObject
 import java.io.File
 import java.io.FileWriter
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
@@ -718,10 +721,9 @@ class MainActivity :
             }
 
             R.id.action_send_statistics -> {
-                thread {
-                    sendEmail()
-                }
-                //downloadScoring()
+                //thread {
+                downloadScoring()
+                //}
             }
 
             R.id.action_update -> {
@@ -796,14 +798,19 @@ class MainActivity :
                                 }
                     }
 
+            csvWriter.flush()
+            csvWriter.close()
 
-            sendCSVByEmail(DEFAULT_STATISTICS_FILE_NAME)
-
+            thread {
+                sendCSVByEmail(DEFAULT_STATISTICS_FILE_NAME)
+            }
 
         } catch (error: Exception) {
             toast(R.string.sorry_error_generating_csv_file)
+            val str = StringWriter()
+            error.printStackTrace(PrintWriter(str))
+            Log.d(TAG, str.buffer.toString())
         } finally {
-            csvWriter?.close()
             if (dialog.isShowing)
                 dialog.dismiss()
         }
@@ -814,21 +821,23 @@ class MainActivity :
 
         var emailAddress = arrayOf(sharedPreferences.getString(PreferenceKeys.EMAIL_KEY, resources.getString(R.string.pref_default_email)))
         val file = File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName)
-        val emailIntent = Intent(Intent.ACTION_SEND)
 
-        emailIntent.type = "text/plain"
-        emailIntent.putExtra(Intent.EXTRA_EMAIL, emailAddress)
-        emailIntent.putExtra(Intent.EXTRA_SUBJECT, resources.getString(R.string.email_subject))
-        emailIntent.putExtra(Intent.EXTRA_TEXT, resources.getString(R.string.email_message))
-        val uri = Uri.fromFile(file)
-        emailIntent.putExtra(Intent.EXTRA_STREAM, uri)
-
-        val componentName = emailIntent.resolveActivity(packageManager)
-
-        if (componentName != null)
-            startActivity(Intent.createChooser(emailIntent, resources.getString(R.string.pick_email_provider)))
-        else
-            toast(R.string.sorry_no_app_to_attend_this_request)
+        val email = HtmlEmail()
+        email.hostName = resources.getString(R.string.host_name)
+        email.setSmtpPort(Integer.parseInt(resources.getString(R.string.host_port)))
+        email.setAuthenticator(DefaultAuthenticator(resources.getString(R.string.user_name), resources.getString(R.string.user_name_password)))
+        email.isSSLOnConnect = true
+        email.setFrom(resources.getString(R.string.user_name))
+        email.addTo(resources.getString(R.string.pref_default_email))
+        email.subject = resources.getString(R.string.email_subject)
+        val jBCNConfLogo = URL(resources.getString(R.string.logo_url))
+        val cid = email.embed(jBCNConfLogo, "JBCNConf Logo")
+        email.setHtmlMsg("<html><h1>JBCNConf June 2018</h1><h2>Statistics results</h2><p>Tested with OpenOffice.</p><p><img src=\"cid:$cid\"></p></html>")
+        email.attach(file)
+        email.send()
+        this.runOnUiThread {
+            toast(R.string.message_sent_successfully)
+        }
 
     }
 
