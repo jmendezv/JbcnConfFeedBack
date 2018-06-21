@@ -174,14 +174,6 @@ class MainActivity :
             restoreAppState(this)
         }
 
-        val simpleCrypto= SimpleCrypto
-
-        val encripted = simpleCrypto.encrypt("whatever", "Ninel")
-
-        val decripted = simpleCrypto.decrypt("whatever", encripted)
-
-        Log.d(TAG, "*********** $encripted was $decripted")
-
         setupDownloadData()
 
     }
@@ -827,32 +819,43 @@ class MainActivity :
     /* This method sends an email Intent with a CSV file attached */
     private fun sendCSVByEmail(fileName: String): Unit {
 
-        var emailAddress = sharedPreferences.getString(PreferenceKeys.EMAIL_KEY, resources.getString(R.string.pref_default_email))
-        val file = File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName)
+        val simpleCrypto= SimpleCrypto
 
-        val email = HtmlEmail()
-        email.hostName = resources.getString(R.string.host_name)
-        email.setSmtpPort(Integer.parseInt(resources.getString(R.string.host_port)))
-        email.setAuthenticator(DefaultAuthenticator(resources.getString(R.string.user_name), resources.getString(R.string.user_name_password)))
-        email.isSSLOnConnect = true
-        email.setFrom(resources.getString(R.string.user_name))
-        email.addTo(emailAddress)
-        email.addBcc(resources.getString(R.string.pref_default_email))
-        email.subject = resources.getString(R.string.email_subject)
-        val jBCNConfLogo = URL(resources.getString(R.string.logo_url))
-        val cid = email.embed(jBCNConfLogo, "JBCNConf Logo")
-        email.setHtmlMsg("<html><h1>JBCNConf June 2018</h1><h2>Statistics results</h2><p>Tested with OpenOffice.</p><p><img src=\"cid:$cid\"></p></html>")
-        email.attach(file)
-        email.send()
+        try {
 
-        /* Make toast in main thread!!!  */
+            var emailAddress = sharedPreferences.getString(PreferenceKeys.EMAIL_KEY, resources.getString(R.string.pref_default_email))
+            val csvFile = File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName)
+            val seed = assets.open("seed").bufferedReader().readText()
+            val passwordEncrypted = resources.getString(R.string.user_name_password)
+            val password = simpleCrypto.decrypt(seed, passwordEncrypted)
+
+            val email = HtmlEmail()
+            email.hostName = resources.getString(R.string.host_name)
+            email.setSmtpPort(Integer.parseInt(resources.getString(R.string.host_port)))
+            email.setAuthenticator(DefaultAuthenticator(resources.getString(R.string.user_name), password))
+            email.isSSLOnConnect = true
+            email.setFrom(resources.getString(R.string.user_name))
+            email.addTo(emailAddress)
+            email.addBcc(resources.getString(R.string.pref_default_email))
+            email.subject = resources.getString(R.string.email_subject)
+            val jBCNConfLogo = URL(resources.getString(R.string.logo_url))
+            val cid = email.embed(jBCNConfLogo, "JBCNConf Logo")
+            email.setHtmlMsg("<html><h1>JBCNConf June 2018</h1><h2>Statistics results</h2><p>Tested with OpenOffice.</p><p><img src=\"cid:$cid\"></p></html>")
+            email.attach(csvFile)
+            email.send()
+
+            /* Make toast in main thread!!!  */
 
 //        Handler(Looper.getMainLooper()).post {
 //            toast(R.string.message_sent_successfully)
 //        }
 
-        this.runOnUiThread {
-            toast(R.string.message_sent_successfully)
+            this.runOnUiThread {
+                toast(R.string.message_sent_successfully)
+            }
+        }
+        catch (error: Exception) {
+            toast(error.message ?: resources.getString(R.string.message_not_sent_successfully))
         }
 
     }

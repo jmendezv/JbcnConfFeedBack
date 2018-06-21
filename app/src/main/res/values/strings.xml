@@ -28,6 +28,7 @@
     <string name="sorry_error_generating_csv_file">Sorry, CSV file was not generated correctly</string>
 
     <string name="message_sent_successfully">Message sent successfully</string>
+    <string name="message_not_sent_successfully">Message could not be sent successfully</string>
     <string name="all_talks_processed">All talks have been processed successfully</string>
     <string name="success_data_updated">All data updated successfully.</string>
     <string name="wrong_credentials">Wrong credentials, try again.</string>
@@ -44,7 +45,7 @@
     <string name="host_name">smtp.googlemail.com</string>
     <string name="host_port">465</string>
     <string name="user_name">josep.mendez@gmail.com</string>
-    <string name="user_name_password">Ninel@31082010</string>
+    <string name="user_name_password">8094BB8B00528FD9B32D531110E9B0BA</string>
     <string name="logo_url">http://www.jbcnconf.com/2018/assets/img/logos/logo-jbcnconf.png</string>
     <string name="logo_small_url">http://www.jbcnconf.com/2018/assets/img/logos/logo-jbcnconf-small.png</string>
     <string name="logo_barcelonajug_url">http://www.jbcnconf.com/2018/assets/img/logos/logo_bicolor_blog_barcelonajug.png</string>
